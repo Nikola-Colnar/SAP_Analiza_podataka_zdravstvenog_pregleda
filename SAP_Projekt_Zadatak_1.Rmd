@@ -1,0 +1,23 @@
+---
+title: "Zadatak_1_SAP"
+author: "36539097 Filip Borić"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results = 'hold')
+library(tidyverse)
+library(lubridate)
+```
+
+## R Markdown
+
+```{r cars}
+summary(cars)
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
