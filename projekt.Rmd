@@ -7,9 +7,15 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results = 'hold')
+library(tidyverse)
+library(lubridate)
+```
+
 ```{r}
 # Učitavanje podataka iz csv datoteke:
-healthDATA.modif = read.csv("Health Screening Data.csv")
+healthDATA.modif = read_csv("Health Screening Data.csv")
 View(healthDATA.modif)
 total = 0
 weird = 0
@@ -20,7 +26,13 @@ for (p in healthDATA.modif$ap_hi) {
   total = total + 1
 }
 weird / total
+```
 
+```{r}
+# Filtriranje besmislenih podataka iz tablice
+filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
+
+filtered_data
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.

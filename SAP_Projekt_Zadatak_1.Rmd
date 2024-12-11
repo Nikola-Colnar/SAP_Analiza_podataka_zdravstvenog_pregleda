@@ -1,6 +1,6 @@
 ---
 title: "Zadatak_1_SAP"
-author: "36539097 Filip Borić"
+author: "Filip Borić"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -11,13 +11,25 @@ library(tidyverse)
 library(lubridate)
 ```
 
-## R Markdown
-
-```{r cars}
-summary(cars)
+```{r}
+# Učitavanje podataka iz csv datoteke:
+healthDATA.modif = read_csv("Health Screening Data.csv")
+View(healthDATA.modif)
+total = 0
+weird = 0
+for (p in healthDATA.modif$ap_hi) {
+  if (p < 50) {
+    weird = weird + 1
+  }
+  total = total + 1
+}
+weird / total
 ```
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+# Filtriranje besmislenih podataka iz tablice
+filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
+
+filtered_data
 ```
 
