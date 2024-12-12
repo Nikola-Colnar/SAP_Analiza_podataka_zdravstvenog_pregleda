@@ -32,7 +32,15 @@ weird / total
 # Filtriranje besmislenih podataka iz tablice
 filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
 
-filtered_data
+filtered_data <- filtered_data %>%
+  mutate(
+    cholesterol = as.factor(cholesterol),
+    gender = as.factor(gender),
+    AgeGroup = as.factor(AgeGroup)
+  ) %>% mutate (AgeGroup = fct_relevel(AgeGroup, "20-40", "40-60", ">60"))
+
+str(filtered_data)
+head(filtered_data)
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.

@@ -30,6 +30,92 @@ weird / total
 # Filtriranje besmislenih podataka iz tablice
 filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
 
-filtered_data
+filtered_data <- filtered_data %>%
+  mutate(
+    cholesterol = as.factor(cholesterol),
+    gender = as.factor(gender),
+    AgeGroup = as.factor(AgeGroup)
+  ) %>% mutate (AgeGroup = fct_relevel(AgeGroup, "20-40", "40-60", ">60"))
+
+str(filtered_data)
+head(filtered_data)
 ```
 
+```{r}
+#Analiza skupa podataka
+filtered_data <- filtered_data %>%
+  mutate(gender = factor(gender, 
+                         levels = c(1, 2), 
+                         labels = c("Female", "Male")))
+
+average_weight <- filtered_data %>%
+  group_by(gender) %>%
+  summarise(avg_weight = mean(weight, na.rm = TRUE))
+
+average_weight
+
+average_height <- filtered_data %>%
+  group_by(gender) %>%
+  summarise(avg_height = mean(height, na.rm = TRUE))
+
+average_height
+
+str(filtered_data)
+head(filtered_data)
+```
+
+Zadatak 1: Kakva je distribucija razina kolesterola među različitim dobnim skupinama i spolovima?
+
+```{r}
+# Zadatak 1
+
+distribution <- filtered_data %>%
+  group_by(gender, cholesterol) %>%
+  summarise(count = n(),
+            percentage = n() / nrow(filtered_data) * 100)
+
+distribution
+
+ggplot(filtered_data, aes(x = cholesterol, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ AgeGroup) +
+  labs(title = "Distribucija kolesterola prema spolu i dobnoj skupini",
+       x = "Kategorije kolesterola",
+       y = "Broj uzoraka") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink"))
+
+```
+```{r}
+cholesterol_age <- filtered_data %>%
+  group_by(AgeGroup, cholesterol) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(AgeGroup) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(cholesterol_age, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ AgeGroup) +
+  labs(title = "Postotak kolesterola unutar dobnih skupina",
+       x = "Kategorija kolesterola",
+       y = "Postotak") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+```
+
+```{r}
+cholesterol_gender <- filtered_data %>%
+  group_by(gender, cholesterol) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(gender) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(cholesterol_gender, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ gender) +
+  labs(title = "Postotak kolesterola unutar spolova",
+       x = "Kategorija kolesterola",
+       y = "Postotak") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+```
