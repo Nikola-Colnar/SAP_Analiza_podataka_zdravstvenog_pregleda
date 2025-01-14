@@ -1,29 +1,191 @@
 ---
 title: "R Notebook"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+ZADATAK 4. 
+"Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a,
+dobi i učestalosti tjelesne aktivnosti?"
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
+Za početak učitajmo i okvirno pogledajmo podatke.
 ```{r}
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read.csv("Health Screening Data.csv")
 View(healthDATA.modif)
+summary(healthDATA.modif)
+```
+
+*analiza i argemntacija za filtriranje podataka
+Obratimo pažnju na sistolički krvni tlak "ap_hi". Htjeli bismo odrediti "outliere", imamo:
+$$IQR = 140.0 - 120.0 = 20$$
+Pa dobivamo za donju i gornju granicu:
+$$Q_1 - 1.5\cdot IQR = 90$$
+$$Q_3 + 1.5 \cdot IQR = 170$$
+Slično za dijastolički "ap_lo" imamo:
+$$IQR = 90 - 80 = 10$$
+$$Q_1 - 15 = 65$$
+$$Q_3 + 15 = 105$$
+Radi konciznosti parovi (donja granica, gornja granica) za relevantne vrijednosti su sljedeće:
+BMI: $(14.45, 39.65)$
+Dob ispitanika nismo odlučili filtrirati jer minimalna i maksimalna dob (29.5835 i 64.9671 godina) zdravorazumski ne predstavljaju "outliere".
+Prema ovim rezultatima ćemo filtrirati podatke.
+
+```{r}
+filtered_data <- subset(healthDATA.modif, 
+                        BMI < 100 
+                        & ap_hi > 90 & ap_hi < 170 
+                        & BMI > 14.45 & BMI < 39.65
+                        & ap_lo > 65 & ap_lo < 105)
+```
+
+Sada metodom najmanjih kvadrata pokušavamo uspostaviti vezu između BMI-a i krvnog tlaka.
+
+```{r}
+fit.ap_hi <- lm(ap_hi ~ poly(BMI,1) , data = filtered_data)
+
+plot(filtered_data$BMI, filtered_data$ap_hi, 
+     main = "Odnos sistoličkog krvnog tlaka i BMI-a",
+     xlab = "Body Mass Index (BMI)", 
+     ylab = "Sistolički krvni tlak (ap_hi)",
+     pch = 16, col = rgb(0, 0, 0, 0.5)) 
+
+
+sorted_index <- order(filtered_data$BMI) 
+lines(filtered_data$BMI[sorted_index], 
+      fit.ap_hi$fitted.values[sorted_index], 
+      col = "red", lwd = 2) 
+
+summary(fit.ap_hi)
+```
+Vidimo blagi pozitivan trend, ali koncentracija podataka oko vrijednosti krvnih tlakova djeljivih s 10 podiže sumnju na greške pri mjerenju. Također $R^2$ vrijednost je 0.0576 što je jako malo i povećanje stupnja polinoma ne mijenja značajno tu vrijednosti niti mijenja oblik modela, odnosno on uvijek izgleda kao ili slično pravcu.
+Analiza reziduala:
+```{r res}
+plot(fit.ap_hi$residuals,
+     main = "Graf reziduala (ap_hi)", 
+     ylab = "Reziduali", xlab = "BMI")
+
+hist(fit.ap_hi$residuals, 
+     breaks = 20, 
+     main = "Histogram Reziduala (ap_hi)", 
+     xlab = "Reziduali")
+
+hist(rstandard(fit.ap_hi), 
+     breaks = 20, 
+     main = "Histogram standardiziranih reziduala (ap_hi)", 
+     xlab = "Standardizirani reziduali")
+
+qqnorm(rstandard(fit.ap_hi), 
+       main = "Q-Q plot standardiziranih reziduala (ap_hi)")
+qqline(rstandard(fit.ap_hi), col = "red", lwd = 2)
+
+plot(fit.ap_hi$fitted.values, fit.ap_hi$residuals, 
+     main = "Reziduali u odnosu na fitane vrijednosti (ap_hi)", 
+     xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
+abline(h = 0, col = "red", lwd = 2)
+
+standardized_residuals <- rstandard(fit.ap_hi)
+
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+require(nortest)
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+Distribucija reziduala malo liči na normalnu, ali ne dovoljno da prođe testove normalnosti.
+
+Za dijastolički krvni tlak imamo:
+```{r}
+fit.ap_lo <- lm(ap_lo ~ poly(BMI, 1) , data = filtered_data)
+plot(filtered_data$BMI, filtered_data$ap_lo, 
+     main = "Odnos dijatoličkog krvnog tlaka i BMI-a",
+     xlab = "Body Mass Index (BMI)", 
+     ylab = "dijastolički krvni tlak (ap_lo)",
+     pch = 16, col = rgb(0, 0, 0, 0.5)) 
+
+
+sorted_index <- order(filtered_data$BMI) 
+lines(filtered_data$BMI[sorted_index], 
+      fit.ap_lo$fitted.values[sorted_index], 
+      col = "red", lwd = 2) 
+summary(fit.ap_lo)
+```
+Slično kao za ap_hi
+Analiza reziduala
+```{r}
+plot(fit.ap_lo$residuals,
+     main = "Graf reziduala (ap_lo)", 
+     ylab = "Reziduali", xlab = "BMI")
+
+hist(fit.ap_lo$residuals, 
+     breaks = 20, 
+     main = "Histogram Reziduala (ap_lo)", 
+     xlab = "Reziduali")
+
+hist(rstandard(fit.ap_lo), 
+     breaks = 20, 
+     main = "Histogram standardiziranih reziduala (ap_lo)", 
+     xlab = "Standardizirani reziduali")
+
+qqnorm(rstandard(fit.ap_lo), 
+       main = "Q-Q plot standardiziranih reziduala (ap_lo)")
+qqline(rstandard(fit.ap_lo), col = "red", lwd = 2)
+
+plot(fit.ap_lo$fitted.values, fit.ap_lo$residuals, 
+     main = "Reziduali u odnosu na fitane vrijednosti (ap_lo)", 
+     xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
+abline(h = 0, col = "red", lwd = 2)
+
+
+standardized_residuals <- rstandard(fit.ap_hi)
+
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+Nemam pojma što s ovime raditi.
+
+
+Obratimo sada pažnju na drugi dio problema: "Možemo li predvidjeti krvni tlak na temelju BMI-a,
+dobi i učestalosti tjelesne aktivnosti?"
+
+Kada radimo na višestrukoj regrešiji želimo da nam regresori budu međusobno nezavisni. Stoga računamo covarijancu za sve parove od BMI, starosti i tjelesne aktivnosti.
+```{r}
+cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$age))
+```
+
+S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije.
+
+```{r}
+fit.multi = lm(ap_hi ~ BMI + age + active, filtered_data)
+summary(fit.multi)
 ```
 
 ```{r}
-# create matrix with 4 columns and 4 rows
-data= matrix(0, nrow = 5, ncol=6)
- 
-# specify the column names and row names of matrix
-colnames(data) = c('Underweight','Normal weight','Overweight','Obesity class I', 'Obesity class II', 'Obesity class III')
-rownames(data) <- c('Normal','Elevated','High Stage 1','High Stage 2', 'Hypertensive crisis')
- 
-# assign to table
-final=as.table(data)
- 
-# display
-final
+selected.model = fit.multi
+plot(selected.model$fitted.values,selected.model$residuals)
+plot(filtered_data$BMI, selected.model$residuals)
+plot(filtered_data$age, selected.model$residuals)
 ```
+```{r}
+ks.test(rstandard(fit.multi),'pnorm')
+require(nortest)
+lillie.test(rstandard(fit.multi))
+```
+```{r}
+boxplot(ap_hi~active,data=filtered_data)
+
+boxplot(ap_lo~active,data=filtered_data)
+
+notA <- subset(filtered_data, active == 0)
+A <- subset(filtered_data, active == 1)
+mean(notA$ap_hi)
+mean(A$ap_hi)
+mean(notA$ap_lo)
+mean(A$ap_lo)
+```
+Iz grafova gore se ne čini kao da tjelesna aktivnost uopće utječe na krvni tlak.
