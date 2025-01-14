@@ -25,10 +25,11 @@ for (p in healthDATA.modif$ap_hi) {
 }
 weird / total
 ```
+Kao prvi korak analize provodi se filtriranje skupa podataka kako bi izbacili besmislene podatke. Izbacuju se podaci gdje su iznosi tlaka nerealni. Također se izbacuju podaci za tlak gdje je izmjereni maksimalni tlak manji od minimalnog. Izbacujemo BMI podatke koji su veći od najvećeg izmjerenog BMI u povijesti.
 
 ```{r}
 # Filtriranje besmislenih podataka iz tablice
-filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
+filtered_data <- healthDATA.modif %>% filter(ap_hi <= 370) %>% filter(ap_lo <= 360) %>% filter(ap_hi >= 40) %>% filter(ap_lo >= 0) %>% filter(ap_hi >= ap_lo) %>% filter(BMI <= 251.1) 
 
 filtered_data <- filtered_data %>%
   mutate(
@@ -118,4 +119,140 @@ ggplot(cholesterol_gender, aes(x = cholesterol, y = percentage, fill = cholester
        y = "Postotak") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
+```
+Prikaz dodatnih distribucija
+----------------------------
+
+Distribucija BMI-ja
+Prema dobnoj skupini:
+
+```{r}
+
+BMI_filtered_data <- filtered_data %>% filter(BMI <= 60)
+
+ggplot(filtered_data, aes(x = BMI, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija BMI-ja prema dobnoj skupini",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(BMI_filtered_data, aes(x = BMI, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana Distribucija BMI-ja prema dobnoj skupini",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+Prema spolu:
+```{r}
+ggplot(filtered_data, aes(x = BMI, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija BMI-ja prema spolu",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(BMI_filtered_data, aes(x = BMI, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija BMI-ja prema spolu",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+
+Distribucija tlaka
+prema dobnoj skupini:
+```{r}
+ap_filtered_data <- filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50)
+
+ggplot(filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija sistoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija dijastoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+
+
+```{r}
+ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija sistoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija dijastoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+
+```{r}
+ggplot(filtered_data, aes(x = ap_hi, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija sistoličkog krvnog tlaka prema spolu",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(filtered_data, aes(x = ap_lo, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija dijastoličkog krvnog tlaka prema spolu",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+
+```{r}
+ggplot(ap_filtered_data, aes(x = ap_hi, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija sistoličkog krvnog tlaka prema spolu",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(ap_filtered_data, aes(x = ap_lo, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija dijastoličkog krvnog tlaka prema spolu",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+
+```{r}
 ```
