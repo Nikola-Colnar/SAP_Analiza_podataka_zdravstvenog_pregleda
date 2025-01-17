@@ -9,6 +9,9 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 
 ```{r}
 library(dplyr)
+library(ggplot2)
+library(car)
+library(nortest)
 
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read.csv("Health Screening Data.csv")
@@ -18,396 +21,227 @@ View(healthDATA.modif)
 
 
 
-Podjela na dvi tablice za aktivne i neaktivne
+Čišćenje podataka
+
+
 ```{r}
+# Postavljanje granica za krvni tlak
+ap_hi_min <- 80
+ap_hi_max <- 250
+ap_lo_min <- 40
+ap_lo_max <- 150
 
-library(dplyr)
+# Postavljanje realnih granica za BMI
+bmi_min <- 10
+bmi_max <- 60
 
+# Čišćenje podataka
+healthDATA.clean <- healthDATA.modif %>%
+  filter(ap_hi >= ap_hi_min & ap_hi <= ap_hi_max) %>%
+  filter(ap_lo >= ap_lo_min & ap_lo <= ap_lo_max) %>%
+  filter(ap_lo <= ap_hi) %>%
+  filter(BMI >= bmi_min & BMI <= bmi_max)
 
-# Funkcija za uklanjanje outliera
-remove_outliers <- function(x) {
-  Q1 <- quantile(x, 0.25, na.rm = TRUE)
-  Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower <- Q1 - 1.5 * IQR
-  upper <- Q3 + 1.5 * IQR
-  x[x >= lower & x <= upper]
-}
-
-# Filtriranje podataka za ap_lo i ap_hi:
-healthDATA.filtered <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  filter(ap_lo >= quantile(ap_lo, 0.25) - 1.5 * IQR(ap_lo) & 
-           ap_lo <= quantile(ap_lo, 0.75) + 1.5 * IQR(ap_lo)) %>%
-  filter(ap_hi >= quantile(ap_hi, 0.25) - 1.5 * IQR(ap_hi) & 
-           ap_hi <= quantile(ap_hi, 0.75) + 1.5 * IQR(ap_hi))
-
-
-# Generiranje box plotova bez outliera:
-boxplot(ap_lo ~ BMICat, 
-        data = healthDATA.filtered,
-        main = "Box Plot za ap_lo prema BMI kategorijama (bez outliera u podacima)",
-        xlab = "BMI Kategorije",
-        ylab = "ap_lo",
-        col = "lightblue")
-
-boxplot(ap_hi ~ BMICat, 
-        data = healthDATA.filtered,
-        main = "Box Plot za ap_hi prema BMI kategorijama (bez outliera u podacima)",
-        xlab = "BMI Kategorije",
-        ylab = "ap_hi",
-        col = "lightgreen")
+# Prikaz očišćenih podataka
+View(healthDATA.clean)
 
 ```
 
 
-prosjecne vrijedosti po tablici
 ```{r}
-library(dplyr)
+
+# Histogram za sistolički tlak (ap_hi)
+ggplot(healthDATA.clean, aes(x = ap_hi)) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Distribucija sistoličkog tlaka", x = "Sistolicki tlak (ap_hi)", y = "Frekvencija") +
+  theme_minimal()
+
+# Histogram za dijastolički tlak (ap_lo)
+ggplot(healthDATA.clean, aes(x = ap_lo)) +
+  geom_histogram(binwidth = 10, fill = "red", color = "black", alpha = 0.7) +
+  labs(title = "Distribucija dijastoličkog tlaka", x = "Dijastolički tlak (ap_lo)", y = "Frekvencija") +
+  theme_minimal()
+
+```
+
+
+```{r}
 library(ggplot2)
-
-# Filtriranje podataka za kategoriju "Overweight":
-overweight_data <- healthDATA.modif %>%
-  filter(BMICat == "Over Weight")
-
-# Histogram distribucije ap_hi za Overweight:
-ggplot(overweight_data, aes(x = ap_hi)) +
-  geom_histogram(binwidth = 10, fill = "skyblue", color = "black", alpha = 0.7) +
-  labs(title = "Distribucija višeg tlaka (ap_hi) za Overweight",
-       x = "Visoki tlak (ap_hi)",
-       y = "Frekvencija") +
-  theme_minimal()
-
-# Density graf distribucije ap_hi za Overweight:
-ggplot(overweight_data, aes(x = ap_hi)) +
-  geom_density(fill = "lightgreen", alpha = 0.7) +
-  labs(title = "Gustoća distribucije višeg tlaka (ap_hi) za Overweight",
-       x = "Visoki tlak (ap_hi)",
-       y = "Gustoća") +
-  theme_minimal()
-
-
-
-```
-
-```{r}
 library(dplyr)
 
-# Filtriranje podataka za kategoriju "Overweight":
-overweight_data <- healthDATA.modif %>%
-  filter(BMICat == "Over Weight")
+# Lista jedinstvenih BMI kategorija
+bmi_categories <- unique(healthDATA.clean$BMICat)
 
-# Izračun kvartila za ap_hi:
-quartiles <- quantile(overweight_data$ap_hi, probs = c(0.25, 0.5, 0.75, 1.0), na.rm = TRUE)
-
-# Ispis rezultata:
-print(quartiles)
-
-```
-
-
-
-```{r}
-library(dplyr)
-
-# Funkcija za uklanjanje outliera:
-remove_outliers <- function(x) {
-  Q1 <- quantile(x, 0.25, na.rm = TRUE)
-  Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower <- Q1 - 1.5 * IQR
-  upper <- Q3 + 1.5 * IQR
-  return(x[x >= lower & x <= upper])
+# Kreiranje histograma i QQ plotova za svaku BMI kategoriju
+for (bmi_cat in bmi_categories) {
+  
+  # Filtriranje podataka za trenutnu BMI kategoriju
+  data_subset <- healthDATA.clean %>% filter(BMICat == bmi_cat)
+  
+  # Histogram za sistolički tlak (ap_hi)
+  p1 <- ggplot(data_subset, aes(x = ap_hi)) +
+    geom_histogram(binwidth = 10, fill = "blue", color = "black", alpha = 0.7) +
+    labs(title = paste("Distribucija sistoličkog tlaka -", bmi_cat),
+         x = "Sistolicki tlak (ap_hi)", y = "Frekvencija") +
+    theme_minimal()
+  
+  # Histogram za dijastolički tlak (ap_lo)
+  p2 <- ggplot(data_subset, aes(x = ap_lo)) +
+    geom_histogram(binwidth = 10, fill = "red", color = "black", alpha = 0.7) +
+    labs(title = paste("Distribucija dijastoličkog tlaka -", bmi_cat),
+         x = "Dijastolički tlak (ap_lo)", y = "Frekvencija") +
+    theme_minimal()
+  
+  # QQ plot za sistolički tlak (ap_hi)
+  p3 <- ggplot(data_subset, aes(sample = ap_hi)) +
+    stat_qq(color = "blue") +
+    stat_qq_line(color = "red") +
+    labs(
+      title = paste("Q-Q plot - Sistolicki tlak (ap_hi) -", bmi_cat),
+      x = "Teorijske kvantile",
+      y = "Empirijske kvantile"
+    ) +
+    theme_minimal()
+  
+  # QQ plot za dijastolički tlak (ap_lo)
+  p4 <- ggplot(data_subset, aes(sample = ap_lo)) +
+    stat_qq(color = "blue") +
+    stat_qq_line(color = "red") +
+    labs(
+      title = paste("Q-Q plot - Dijastolički tlak (ap_lo) -", bmi_cat),
+      x = "Teorijske kvantile",
+      y = "Empirijske kvantile"
+    ) +
+    theme_minimal()
+  
+  # Prikaz grafova
+  print(p1)
+  print(p2)
+  print(p3)
+  print(p4)
 }
 
-# Filtriranje podataka za kategoriju "Overweight":
-overweight_data <- healthDATA.modif %>%
-  filter(BMICat == "Over Weight")
-
-# Uklanjanje outliera iz ap_hi:
-filtered_ap_hi <- remove_outliers(overweight_data$ap_hi)
-
-# Tablica frekvencija za ap_hi bez outliera:
-freq_table <- as.data.frame(table(filtered_ap_hi))
-
-# Dodavanje naziva stupaca:
-colnames(freq_table) <- c("Vrijednost_ap_hi", "Frekvencija")
-
-# Ispis tablice frekvencija:
-print(freq_table)
-
+}
 ```
 
+
 ```{r}
-
+# Potrebne biblioteke
 library(dplyr)
+library(car)  # za Leveneov test
 
-# Izračun srednje vrijednosti za sve podatke (sve BMI grupe zajedno) za ap_hi i ap_lo:
-srednja_sve <- healthDATA.modif %>%
-  summarise(Srednja_ap_hi = mean(ap_hi, na.rm = TRUE),
-            Srednja_ap_lo = mean(ap_lo, na.rm = TRUE))
+# Pretpostavimo da ste podatke već učitali u healthDATA.clean
 
-# Izračun srednje vrijednosti za svaku BMI grupu odvojeno za ap_hi i ap_lo:
-srednja_po_grupama <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  summarise(Srednja_ap_hi = mean(ap_hi, na.rm = TRUE),
-            Srednja_ap_lo = mean(ap_lo, na.rm = TRUE))
+# 1) Test normalnosti po grupama (Kolmogorov-Smirnov)
+bmi_categories <- unique(healthDATA.clean$BMICat)
 
-# Ispis rezultata:
-cat("Srednje vrijednosti za sve BMI grupe zajedno:\n")
-print(srednja_sve)
-
-cat("\nSrednje vrijednosti za svaku BMI grupu odvojeno:\n")
-print(srednja_po_grupama)
-
-
-
-```
-```{r}
-library(dplyr)
-
-# Provjera veličine svake BMI grupe
-velicine_grupa <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  summarise(Velicina = n())
-
-cat("Veličine BMI grupa:\n")
-print(velicine_grupa)
-
-# Kolmogorov-Smirnov test za normalnost za svaku grupu i za ap_hi i ap_lo
-ks_test_rezultati <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  summarise(
-    KS_ap_hi_stat = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$statistic,
-    KS_ap_hi_pval = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$p.value,
-    KS_ap_lo_stat = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$statistic,
-    KS_ap_lo_pval = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$p.value
+for (bmi_cat in bmi_categories) {
+  
+  data_subset <- healthDATA.clean %>%
+    filter(BMICat == bmi_cat)
+  
+  cat("==================================================\n")
+  cat("BMI Category:", bmi_cat, "\n")
+  cat("Broj zapisa u ovoj kategoriji:", nrow(data_subset), "\n")
+  
+  # Kolmogorov–Smirnov test za ap_hi
+  ks_hi <- ks.test(
+    data_subset$ap_hi, 
+    "pnorm",
+    mean = mean(data_subset$ap_hi), 
+    sd   = sd(data_subset$ap_hi)
   )
-
-cat("\nKolmogorov-Smirnov test rezultati:\n")
-print(ks_test_rezultati)
-
-```
-
-
-```{r}
-
-library(dplyr)
-library(ggplot2)
-
-# Funkcija za uklanjanje outliera:
-remove_outliers <- function(x) {
-  Q1 <- quantile(x, 0.25, na.rm = TRUE)
-  Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower <- Q1 - 1.5 * IQR
-  upper <- Q3 + 1.5 * IQR
-  return(ifelse(x >= lower & x <= upper, x, NA))
-}
-
-# Uklanjanje outliera za ap_hi i ap_lo:
-filtered_data <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  mutate(ap_hi_filtered = remove_outliers(ap_hi),
-         ap_lo_filtered = remove_outliers(ap_lo)) %>%
-  ungroup()
-
-# Priprema podataka za grafove:
-ap_hi_data <- filtered_data %>%
-  select(BMICat, ap_hi_filtered) %>%
-  rename(Value = ap_hi_filtered) %>%
-  mutate(Variable = "ap_hi")
-
-ap_lo_data <- filtered_data %>%
-  select(BMICat, ap_lo_filtered) %>%
-  rename(Value = ap_lo_filtered) %>%
-  mutate(Variable = "ap_lo")
-
-# Kombiniranje podataka:
-plot_data <- bind_rows(ap_hi_data, ap_lo_data)
-
-# Kreiranje histogram grafova s facet_wrap:
-ggplot(plot_data, aes(x = Value, fill = BMICat)) +
-  geom_histogram(binwidth = 6, color = "black", alpha = 0.7, position = "dodge") +
-  facet_wrap(~ Variable + BMICat, scales = "free", ncol = 2) +
-  labs(title = "Histogrami ap_hi i ap_lo prema BMI kategorijama (bez outliera)",
-       x = "Vrijednost",
-       y = "Frekvencija") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-
-```
-
-
-```{r}
-
-
-library(dplyr)
-library(ggplot2)
-
-# Funkcija za zaokruživanje na najbliži višekratnik 5:
-round_to_nearest_5 <- function(x) {
-  round(x / 10) * 10
-}
-
-# Funkcija za uklanjanje outliera:
-remove_outliers <- function(x) {
-  Q1 <- quantile(x, 0.25, na.rm = TRUE)
-  Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower <- Q1 - 1.5 * IQR
-  upper <- Q3 + 1.5 * IQR
-  return(ifelse(x >= lower & x <= upper, x, NA))
-}
-
-# Uklanjanje outliera i zaokruživanje:
-filtered_data <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  mutate(
-    ap_hi = remove_outliers(ap_hi), # Ukloni outliere za ap_hi
-    ap_lo = remove_outliers(ap_lo), # Ukloni outliere za ap_lo
-    ap_hi = round_to_nearest_5(ap_hi), # Zaokruži na 5
-    ap_lo = round_to_nearest_5(ap_lo)  # Zaokruži na 5
-  ) %>%
-  ungroup()
-
-# Histogrami za ap_hi:
-hist_ap_hi <- ggplot(filtered_data, aes(x = ap_hi)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "lightblue", alpha = 0.7) +
-  facet_wrap(~ BMICat, scales = "free_y", ncol = 2) +
-  labs(title = "Histograms for ap_hi (Rounded, Outliers Removed)",
-       x = "ap_hi (Rounded to 5)",
-       y = "Frequency") +
-  theme_minimal()
-
-# Histogrami za ap_lo:
-hist_ap_lo <- ggplot(filtered_data, aes(x = ap_lo)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "lightgreen", alpha = 0.7) +
-  facet_wrap(~ BMICat, scales = "free_y", ncol = 2) +
-  labs(title = "Histograms for ap_lo (Rounded, Outliers Removed)",
-       x = "ap_lo (Rounded to 5)",
-       y = "Frequency") +
-  theme_minimal()
-
-# Q-Q grafovi za ap_hi:
-qq_ap_hi <- ggplot(filtered_data, aes(sample = ap_hi)) +
-  stat_qq() +
-  stat_qq_line() +
-  facet_wrap(~ BMICat, scales = "free", ncol = 2) +
-  labs(title = "Q-Q Plots for ap_hi (Rounded, Outliers Removed)",
-       x = "Theoretical Quantiles",
-       y = "Sample Quantiles") +
-  theme_minimal()
-
-# Q-Q grafovi za ap_lo:
-qq_ap_lo <- ggplot(filtered_data, aes(sample = ap_lo)) +
-  stat_qq() +
-  stat_qq_line() +
-  facet_wrap(~ BMICat, scales = "free", ncol = 2) +
-  labs(title = "Q-Q Plots for ap_lo (Rounded, Outliers Removed)",
-       x = "Theoretical Quantiles",
-       y = "Sample Quantiles") +
-  theme_minimal()
-
-# Prikaz svih grafova:
-print(hist_ap_hi)
-print(hist_ap_lo)
-print(qq_ap_hi)
-print(qq_ap_lo)
-
-
-
-
-
-```
-
-
-```{r}
-
-library(dplyr)
-library(ggplot2)
-
-# Funkcija za zaokruživanje na najbliži višekratnik 10:
-round_to_nearest_10 <- function(x) {
-  round(x / 10) * 10
-}
-
-# Funkcija za uklanjanje outliera:
-remove_outliers <- function(x) {
-  Q1 <- quantile(x, 0.25, na.rm = TRUE)
-  Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower <- Q1 - 1.5 * IQR
-  upper <- Q3 + 1.5 * IQR
-  return(ifelse(x >= lower & x <= upper, x, NA))
-}
-
-# Uklanjanje outliera i zaokruživanje na 10:
-filtered_data <- healthDATA.modif %>%
-  group_by(BMICat) %>%
-  mutate(
-    ap_hi = remove_outliers(ap_hi), # Ukloni outliere za ap_hi
-    ap_lo = remove_outliers(ap_lo), # Ukloni outliere za ap_lo
-    ap_hi = round_to_nearest_10(ap_hi), # Zaokruži na 10
-    ap_lo = round_to_nearest_10(ap_lo)  # Zaokruži na 10
-  ) %>%
-  ungroup()
-
-# Provjera normalnosti za diskretne vrijednosti:
-ks_results_rounded_10 <- filtered_data %>%
-  group_by(BMICat) %>%
-  summarise(
-    KS_ap_hi_stat = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$statistic,
-    KS_ap_hi_pval = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$p.value,
-    KS_ap_lo_stat = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$statistic,
-    KS_ap_lo_pval = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$p.value
+  cat("\n>> Kolmogorov-Smirnov test - ap_hi <<\n")
+  cat("  p-value:", ks_hi$p.value, "\n")
+  
+  # Kolmogorov–Smirnov test za ap_lo
+  ks_lo <- ks.test(
+    data_subset$ap_lo, 
+    "pnorm",
+    mean = mean(data_subset$ap_lo), 
+    sd   = sd(data_subset$ap_lo)
   )
+  cat("\n>> Kolmogorov-Smirnov test - ap_lo <<\n")
+  cat("  p-value:", ks_lo$p.value, "\n\n")
+}
 
-# Histogrami za ap_hi i ap_lo:
-hist_ap_hi_10 <- ggplot(filtered_data, aes(x = ap_hi, fill = BMICat)) +
-  geom_histogram(binwidth = 10, color = "black", alpha = 0.7, position = "dodge") +
-  labs(title = "Histogram za ap_hi (zaokruženo na 10, bez outliera)",
-       x = "ap_hi (zaokruženo na 10)",
-       y = "Frekvencija") +
-  theme_minimal()
+cat("==================================================\n")
+cat("     Test homoskedasticnosti (LeveneTest)\n")
+cat("==================================================\n")
 
-hist_ap_lo_10 <- ggplot(filtered_data, aes(x = ap_lo, fill = BMICat)) +
-  geom_histogram(binwidth = 10, color = "black", alpha = 0.7, position = "dodge") +
-  labs(title = "Histogram za ap_lo (zaokruženo na 10, bez outliera)",
-       x = "ap_lo (zaokruženo na 10)",
-       y = "Frekvencija") +
-  theme_minimal()
+# 2) Leveneov test homoskedastičnosti između svih BMI grupa
+#    - za ap_hi
+levene_hi <- leveneTest(ap_hi ~ BMICat, data = healthDATA.clean)
+cat("\nLevene test: ap_hi ~ BMICat\n")
+print(levene_hi)
 
-# Prikaz rezultata Kolmogorov-Smirnovog testa:
-cat("\nKolmogorov-Smirnov test za normalnost (zaokružene varijable na 10, bez outliera):\n")
-print(ks_results_rounded_10)
-
-# Prikaz histogram grafova:
-print(hist_ap_hi_10)
-print(hist_ap_lo_10)
+#    - za ap_lo
+levene_lo <- leveneTest(ap_lo ~ BMICat, data = healthDATA.clean)
+cat("\nLevene test: ap_lo ~ BMICat\n")
+print(levene_lo)
 
 
 ```
 
 ```{r}
 
+# Kruskal-Wallis za sistolički tlak (ap_hi)
+kruskal_hi <- kruskal.test(ap_hi ~ BMICat, data = healthDATA.clean)
+cat("----- Kruskal-Wallis Test za ap_hi -----\n")
+print(kruskal_hi)
+
+# Kruskal-Wallis za dijastolički tlak (ap_lo)
+kruskal_lo <- kruskal.test(ap_lo ~ BMICat, data = healthDATA.clean)
+cat("\n----- Kruskal-Wallis Test za ap_lo -----\n")
+print(kruskal_lo)
+
+```
+```{r}
+library(FSA)  # za dunnTest
+
+# Post-hoc (Dunn test) za ap_hi
+cat("\n===== POST-HOC: Dunn test za ap_hi =====\n")
+dunn_hi <- dunnTest(ap_hi ~ BMICat, data = healthDATA.clean, method = "bonferroni")
+print(dunn_hi)
+
+# Post-hoc (Dunn test) za ap_lo
+cat("\n===== POST-HOC: Dunn test za ap_lo =====\n")
+dunn_lo <- dunnTest(ap_lo ~ BMICat, data = healthDATA.clean, method = "bonferroni")
+print(dunn_lo)
+```
 
 
-library(car) # Za Leveneov test
 
-# Leveneov test za ap_hi:
-levene_ap_hi <- leveneTest(ap_hi ~ BMICat, data = filtered_data, na.action = na.exclude)
+```{r}
 
-# Leveneov test za ap_lo:
-levene_ap_lo <- leveneTest(ap_lo ~ BMICat, data = filtered_data, na.action = na.exclude)
 
-# Prikaz rezultata:
-cat("Rezultati Leveneovog testa za ap_hi:\n")
-print(levene_ap_hi)
+# Boxplot za sistolički tlak (ap_hi) po BMI kategorijama
+p_hi <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_hi)) + 
+  geom_boxplot(fill = "skyblue", alpha = 0.7, outlier.color = "red") +
+  # Crvena isprekidana linija je ukupna sredina (mean) ap_hi
+  geom_hline(yintercept = mean(healthDATA.clean$ap_hi), 
+             color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Box plot sistoličkog tlaka (ap_hi) po BMI kategorijama", 
+       x = "BMI kategorija", 
+       y = "Sistolički tlak (ap_hi)") +
+  theme_minimal()
 
-cat("\nRezultati Leveneovog testa za ap_lo:\n")
-print(levene_ap_lo)
+# Boxplot za dijastolički tlak (ap_lo) po BMI kategorijama
+p_lo <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_lo)) + 
+  geom_boxplot(fill = "orange", alpha = 0.7, outlier.color = "blue") +
+  # Crvena isprekidana linija je ukupna sredina (mean) ap_lo
+  geom_hline(yintercept = mean(healthDATA.clean$ap_lo), 
+             color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Box plot dijastoličkog tlaka (ap_lo) po BMI kategorijama", 
+       x = "BMI kategorija", 
+       y = "Dijastolički tlak (ap_lo)") +
+  theme_minimal()
+
+# Prikaz oba grafa
+print(p_hi)
+print(p_lo)
+
+
 
 ```
 
