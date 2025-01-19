@@ -9,7 +9,52 @@ ZADATAK 4.
 "Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a,
 dobi i učestalosti tjelesne aktivnosti?"
 
+Ovo je postupak preko tablice kontingencije
+```{r}
+data <- matrix(0, nrow = 5, ncol = 4)
+
+colnames(data) <- c("Underweight", "Normal weight", "Overweight", "Obesity")
+rownames(data) <- c("Normal", "Elevated", "High Stage 1", "High Stage 2", "Hypertensive crisis")
+
+for (row in 1:nrow(healthDATA.modif)) {
+  bmi_cat <- healthDATA.modif[row, "BMICat"]
+  bp <- healthDATA.modif[row, "ap_hi"]
+
+  if (bp < 120) {
+    bp_cat <- "Normal"
+} else if (bp >= 120 && bp < 130) {
+    bp_cat <- "Elevated"
+  } else if (bp >= 130 && bp < 140) {
+    bp_cat <- "High Stage 1"
+  } else if (bp >= 140 && bp < 180) {
+    bp_cat <- "High Stage 2"
+  } else {
+    bp_cat <- "Hypertensive crisis"
+  }
+  
+  # Increment the corresponding cell in the matrix
+  if (bmi_cat == "Under Weight") {
+    data[bp_cat, "Underweight"] <- data[bp_cat, "Underweight"] + 1
+  } else if (bmi_cat == "Normal") {
+    data[bp_cat, "Normal weight"] <- data[bp_cat, "Normal weight"] + 1
+  } else if (bmi_cat == "Over Weight") {
+    data[bp_cat, "Overweight"] <- data[bp_cat, "Overweight"] + 1
+  } else if (bmi_cat == "Obese") {
+    data[bp_cat, "Obesity"] <- data[bp_cat, "Obesity"] + 1
+  }
+}
+
+# Convert to a table and display
+final <- as.table(data)
+print(final)
+chisq <- chisq.test(data)
+chisq
+
+```
+Malena p vrijednost govori da definitivno postoji zavisnost.
+U nastavku slijedi rješenje s linearnom regreijom.
 Za početak učitajmo i okvirno pogledajmo podatke.
+
 ```{r}
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read.csv("Health Screening Data.csv")
@@ -31,21 +76,27 @@ Radi konciznosti parovi (donja granica, gornja granica) za relevantne vrijednost
 BMI: $(14.45, 39.65)$
 Dob ispitanika nismo odlučili filtrirati jer minimalna i maksimalna dob (29.5835 i 64.9671 godina) zdravorazumski ne predstavljaju "outliere".
 Prema ovim rezultatima ćemo filtrirati podatke.
+TRENUTNO LOGARITMIRAM PODATKE (ovo nije imalo previše uspjeha)
 
 ```{r}
+library(tidyverse)
 filtered_data <- subset(healthDATA.modif, 
-                        BMI < 100 
+                        BMI < 100
                         & ap_hi > 90 & ap_hi < 170 
                         & BMI > 14.45 & BMI < 39.65
-                        & ap_lo > 65 & ap_lo < 105)
+                        & ap_lo > 65 & ap_lo < 105) %>% mutate(logAp_hi = log(ap_hi))
+summary(filtered_data)
+
+
 ```
 
 Sada metodom najmanjih kvadrata pokušavamo uspostaviti vezu između BMI-a i krvnog tlaka.
+Probali smo fiksirati nezavisne varijable
 
 ```{r}
-fit.ap_hi <- lm(ap_hi ~ poly(BMI,1) , data = filtered_data)
+fit.logAp_hi <- lm(logAp_hi ~ poly(BMI,1) , data = filtered_data)
 
-plot(filtered_data$BMI, filtered_data$ap_hi, 
+plot(filtered_data$BMI, filtered_data$logAp_hi, 
      main = "Odnos sistoličkog krvnog tlaka i BMI-a",
      xlab = "Body Mass Index (BMI)", 
      ylab = "Sistolički krvni tlak (ap_hi)",
@@ -54,10 +105,10 @@ plot(filtered_data$BMI, filtered_data$ap_hi,
 
 sorted_index <- order(filtered_data$BMI) 
 lines(filtered_data$BMI[sorted_index], 
-      fit.ap_hi$fitted.values[sorted_index], 
+      fit.logAp_hi$fitted.values[sorted_index], 
       col = "red", lwd = 2) 
 
-summary(fit.ap_hi)
+summary(fit.logAp_hi)
 ```
 Vidimo blagi pozitivan trend, ali koncentracija podataka oko vrijednosti krvnih tlakova djeljivih s 10 podiže sumnju na greške pri mjerenju. Također $R^2$ vrijednost je 0.0576 što je jako malo i povećanje stupnja polinoma ne mijenja značajno tu vrijednosti niti mijenja oblik modela, odnosno on uvijek izgleda kao ili slično pravcu.
 Analiza reziduala:
