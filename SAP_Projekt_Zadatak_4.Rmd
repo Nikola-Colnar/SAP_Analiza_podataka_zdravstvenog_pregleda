@@ -19,8 +19,8 @@ healthDATA.modif = read.csv("Health Screening Data.csv")
 set.seed(906) 
 healthDATA.modif <- healthDATA.modif %>%
   mutate(
-    ap_hi = ap_hi + round(runif(n(), min = -5, max = 5)), 
-    ap_lo = ap_lo + round(runif(n(), min = -5, max = 5))
+    ap_hi = ap_hi + runif(n(), min = -5, max = 5), 
+    ap_lo = ap_lo + runif(n(), min = -5, max = 5)
     )
 
 #View(healthDATA.modif)
@@ -31,14 +31,14 @@ summary(healthDATA.modif)
 
 Prije nego što krenemo s analizom preko linearne regresije, želimo izbaciti outliere za relevantne veličine.
 Obratimo pažnju na sistolički krvni tlak "ap_hi", imamo:
-$$IQR = 137 - 117 = 20$$
+$$IQR = 137 - 116.6 = 20.4$$
 Pa dobivamo za donju i gornju granicu:
-$$Q_1 - 1.5\cdot IQR = 87$$
-$$Q_3 + 1.5 \cdot IQR = 167$$
+$$Q_1 - 1.5\cdot IQR = 86$$
+$$Q_3 + 1.5 \cdot IQR = 167.6$$
 Slično za dijastolički "ap_lo" imamo:
-$$IQR = 87 - 76 = 11$$
-$$Q_1 - 1.5 \cdot IQR = 59.5$$
-$$Q_3 + 1.5 \cdot IQR= 103.5$$
+$$IQR = 87.19 - 76.09 = 11.1$$
+$$Q_1 - 1.5 \cdot IQR = 59.44$$
+$$Q_3 + 1.5 \cdot IQR= 103.84$$
 Isti postupak radimo za BMI:
 $$IQR = 6.3$$
 $$Q_1 - 1.5 \cdot IQR = 14.45$$
@@ -49,9 +49,9 @@ Prema ovim rezultatima ćemo filtrirati podatke.
 library(tidyverse)
 
 filtered_data <- subset(healthDATA.modif, 
-                        ap_hi > 87 & ap_hi < 167
+                        ap_hi > 86 & ap_hi < 167.6
                         & BMI > 14.45 & BMI < 39.65
-                        & ap_lo > 59.5 & ap_lo < 103.5)
+                        & ap_lo > 59.44 & ap_lo < 103.84)
 summary(filtered_data)
 
 
@@ -186,18 +186,32 @@ Nemoguće je (na temelju ovih podataka) predvidjeti dijastolički krvni tlak iz 
 Obratimo sada pažnju na drugi dio problema: "Možemo li predvidjeti krvni tlak na temelju BMI-a, dobi i učestalosti tjelesne aktivnosti?"
 
 Kada radimo na višestrukoj regrešiji želimo da nam regresori budu međusobno "dovoljno" nezavisni, inače ne možemo interpretirati rezultate. Stoga računamo kovarijancu za sve parove od BMI, starosti i tjelesne aktivnosti.
+NAPOMENA: S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije.
 
 ```{r}
 cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$AgeinYr))
 ```
+Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne. Veću zavisnost vidimo između BMI i starosti, što ima smisla jer kako starimo naša visina se toliko ne mijenja koliko naša masa, pa je normalno da će BMI ovisiti o starosti, no svakako možemo pretpostaviti nezavisnost i zbog toga što je najstarija osoba u uzorku ima $64$ godina, što nije dovoljno staro da krene značajno odumiranje mišićnog tkiva.
 
-
-S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije.
 
 ```{r}
-fit.multi = lm(ap_hi ~ BMI + active + AgeinYr, filtered_data)
+fit.multi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
 #fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
 summary(fit.multi)
+```
+Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, no s trenutnim odabirom regresora dobivamo najbolju $R^2$ vrijednost tako da smo ih odlučili zadržati.
+
+Nastavimo s analizom reziduala. Prvo testiramo normalnost:
+
+```{r residuali - visestruka regresija}
+plot(fit.multi$fitted.values,fit.multi$residuals) 
+
+#KS test na normalnost 
+ks.test(rstandard(fit.ap_hi),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.ap_hi))
+
 ```
 
 ```{r}
