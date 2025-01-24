@@ -43,8 +43,6 @@ Isti postupak radimo za BMI:
 $$IQR = 6.3$$
 $$Q_1 - 1.5 \cdot IQR = 14.45$$
 $$Q_3 + 1.5 \cdot IQR = 39.65$$
-Radi konciznosti parovi (donja granica, gornja granica) za relevantne vrijednosti su sljedeće:
-BMI: $(14.45, 39.65)$
 Dob ispitanika nismo odlučili filtrirati jer minimalna i maksimalna dob (29.5835 i 64.9671 godina) zdravorazumski ne predstavljaju "outliere".
 Prema ovim rezultatima ćemo filtrirati podatke.
 ```{r}
@@ -59,7 +57,7 @@ summary(filtered_data)
 
 ```
 
-Sada metodom najmanjih kvadrata pokušavamo uspostaviti vezu između BMI-a i krvnog tlaka. Na sljedećem grafu možemo vidjeti graph raspršenja između sistoličkog tlaka i BMI-a kao i pravac linearne regresije koji smo izračunali iz podataka. Pokušavali smo linearna regresiju s polinomima viših stupnjeva, ali su svi stupnjevi bili veoma slični pravcima i nisu poboljšavali vrijednost $R^2$. Zbog toga smo dali prednost najjednostavnijem modelu, a to je naravno pravac.
+Sada ćemo metodom najmanjih kvadrata pokušati uspostaviti vezu između BMI-a i krvnog tlaka.
 ```{r}
 fit.ap_hi <- lm(ap_hi ~ poly(BMI,1) , data = filtered_data)
 
@@ -77,7 +75,20 @@ lines(filtered_data$BMI[sorted_index],
 
 summary(fit.ap_hi)
 ```
-Vidimo blagi pozitivan trend, ali $R^2$ vrijednost je 0.0564 ($R^2_{adj}$ je  0.05638) što ukazuje na loš fit modela, no mi ćemo svakako sada nastaviti s analizom reziduala.
+Iznad možemo vidjeti graf raspršenja između sistoličkog tlaka i BMI-a kao i pravac linearne regresije koji smo izračunali iz podataka. Pokušavali smo linearnu regresiju s polinomima viših stupnjeva, ali su svi stupnjevi bili veoma slični pravcima i nisu poboljšavali vrijednost $R^2$. Zbog toga smo dali prednost najjednostavnijem modelu, a to je naravno pravac. 
+Vidimo blagi pozitivan trend, ali se iz p vrijednosti vidi da je značajnost regresora skoro pa zanemariva. Također, $R^2$ vrijednost je 0.0564 ($R^2_{adj}$ je  0.05638) što ukazuje na loš fit modela, no mi ćemo svakako sada nastaviti s analizom reziduala.
+
+```{r}
+standardized_residuals <- rstandard(fit.ap_hi)
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+require(nortest)
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+
+Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
 ```{r res}
 plot(fit.ap_hi$residuals,
      main = "Graf reziduala (ap_hi)", 
@@ -102,20 +113,13 @@ plot(fit.ap_hi$fitted.values, fit.ap_hi$residuals,
      xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
 abline(h = 0, col = "red", lwd = 2)
 
-standardized_residuals <- rstandard(fit.ap_hi)
-
-ks_test <- ks.test(standardized_residuals, "pnorm")
-print(ks_test)
-
-require(nortest)
-lilliefors_test <- lillie.test(standardized_residuals)
-print(lilliefors_test)
 ```
-Reziduali padaju na testu normalnosti (i KS i Lilliefors), a to nas baš i ne čudi ako pogledamo histogram reziduala na kojem se ne vide naznake normalnosti. 
-Sada možemo zaključiti da je nemoguće predvidjeti sistolički krvni tlak iz BMI-a.
+
+Q-Q plot nam govori da ova razdioba ima lakše repove od normalne, ali ovo svakako nije normalna distribucija.
+Sada možemo zaključiti da je nemoguće predvidjeti sistolički krvni tlak iz BMI-a (iz ovih podataka).
 
 
-Za dijastolički krvni tlak ponavljamo isti postupak. I zadržat ćemo model pravca iz istog raloga kao i za sistolički tlak.
+Za dijastolički krvni tlak ponavljamo isti postupak.
 ```{r}
 fit.ap_lo <- lm(ap_lo ~ poly(BMI, 1) , data = filtered_data)
 plot(filtered_data$BMI, filtered_data$ap_lo, 
@@ -132,8 +136,20 @@ lines(filtered_data$BMI[sorted_index],
 summary(fit.ap_lo)
 ```
 
-Vidimo blagi pozitivan trend, ali vidimo (iz p vrijednosti) da regresor ima jako malenu značajnost. Također, $R^2$ vrijednost je sada 0.04008 ($R^2_{adj}$ je  0.04007) što opet ukazuje na loš fit modela, no mi ćemo svakako opet nastaviti s analizom reziduala.
+ Zadržat ćemo model pravca iz istog razloga kao i za sistolički tlak. Vidi se blagi pozitivan trend, ali vidimo (iz p vrijednosti) da regresor ima jako malenu značajnost. Također, $R^2$ vrijednost je sada 0.04008 ($R^2_{adj}$ je  0.04007) što opet ukazuje na loš fit modela, no mi ćemo svakako opet nastaviti s analizom reziduala.
 Analiza reziduala
+```{r}
+standardized_residuals <- rstandard(fit.ap_hi)
+
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+
+Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
+
 ```{r}
 plot(fit.ap_lo$residuals,
      main = "Graf reziduala (ap_lo)", 
@@ -158,29 +174,29 @@ plot(fit.ap_lo$fitted.values, fit.ap_lo$residuals,
      xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
 abline(h = 0, col = "red", lwd = 2)
 
-
-standardized_residuals <- rstandard(fit.ap_hi)
-
-ks_test <- ks.test(standardized_residuals, "pnorm")
-print(ks_test)
-
-lilliefors_test <- lillie.test(standardized_residuals)
-print(lilliefors_test)
 ```
-Reziduali se barem grafički ponašaju ljepše nego u slučaju sistoličkog krvnog tlaka, ali ne dovoljno da prođu test normalnosti. Nemoguće je (na temelju ovih podataka) predvidjeti dijastolički krvni tlak iz BMI-a.
+Grafički možemo reći da reziduali imaju teže repove, ali se ne ponašaju baš pravino.
+Nemoguće je (na temelju ovih podataka) predvidjeti dijastolički krvni tlak iz BMI-a.
+
+
+
+
+
 
 Obratimo sada pažnju na drugi dio problema: "Možemo li predvidjeti krvni tlak na temelju BMI-a, dobi i učestalosti tjelesne aktivnosti?"
 
-Kada radimo na višestrukoj regrešiji želimo da nam regresori budu međusobno nezavisni. Stoga računamo covarijancu za sve parove od BMI, starosti i tjelesne aktivnosti.
+Kada radimo na višestrukoj regrešiji želimo da nam regresori budu međusobno "dovoljno" nezavisni, inače ne možemo interpretirati rezultate. Stoga računamo kovarijancu za sve parove od BMI, starosti i tjelesne aktivnosti.
+
 ```{r}
-cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$age))
+cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$AgeinYr))
 ```
 
-S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije, ali 
+
+S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije.
 
 ```{r}
-#fit.multi = lm(ap_hi ~ BMI + age + active + smoke + AgeinYr + gender + alco + cardio, filtered_data)
-fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
+fit.multi = lm(ap_hi ~ BMI + active + AgeinYr, filtered_data)
+#fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
 summary(fit.multi)
 ```
 
@@ -207,4 +223,5 @@ mean(A$ap_hi)
 mean(notA$ap_lo)
 mean(A$ap_lo)
 ```
+
 Iz grafova gore se ne čini kao da tjelesna aktivnost uopće utječe na krvni tlak.
