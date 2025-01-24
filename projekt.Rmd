@@ -1,19 +1,23 @@
 ---
-title: "R Notebook"
+title: "[SAP] Projektni zadatak - Analiza podataka zdravstvenog pregleda"
+author: "Statistički najizglednije ime"
+date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(results = 'hold')
 library(tidyverse)
 library(lubridate)
+library(nortest)
+library(car)
 ```
 
-```{r}
+#Inicijalni koraci projekta
+## Učitavanje podataka
+
+```{r, include=FALSE}
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read_csv("Health Screening Data.csv")
 View(healthDATA.modif)
@@ -27,7 +31,7 @@ for (p in healthDATA.modif$ap_hi) {
 }
 weird / total
 ```
-
+##Filtriranje podataka
 ```{r}
 # Filtriranje besmislenih podataka iz tablice
 filtered_data <- healthDATA.modif %>% filter(ap_hi > 0) %>% filter(ap_lo > 0) %>% filter(ap_hi > ap_lo)
@@ -43,8 +47,938 @@ str(filtered_data)
 head(filtered_data)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+Kao prvi korak analize provodi se filtriranje skupa podataka kako bi izbacili besmislene podatke. Izbacuju se podaci gdje su iznosi tlaka nerealni. Također se izbacuju podaci za tlak gdje je izmjereni maksimalni tlak manji od minimalnog. Izbacujemo BMI podatke koji su veći od najvećeg izmjerenog BMI u povijesti.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+```{r}
+# Filtriranje besmislenih podataka iz tablice
+filtered_data <- healthDATA.modif %>% filter(ap_hi <= 370) %>% filter(ap_lo <= 360) %>% filter(ap_hi >= 40) %>% filter(ap_lo >= 0) %>% filter(ap_hi >= ap_lo) %>% filter(BMI <= 251.1) 
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+filtered_data <- filtered_data %>%
+  mutate(
+    cholesterol = as.factor(cholesterol),
+    gender = as.factor(gender),
+    AgeGroup = as.factor(AgeGroup)
+  ) %>% mutate (AgeGroup = fct_relevel(AgeGroup, "20-40", "40-60", ">60"))
+
+str(filtered_data)
+head(filtered_data)
+```
+
+```{r}
+#Analiza skupa podataka
+filtered_data <- filtered_data %>%
+  mutate(gender = factor(gender, 
+                         levels = c(1, 2), 
+                         labels = c("Female", "Male")))
+
+average_weight <- filtered_data %>%
+  group_by(gender) %>%
+  summarise(avg_weight = mean(weight, na.rm = TRUE))
+
+average_weight
+
+average_height <- filtered_data %>%
+  group_by(gender) %>%
+  summarise(avg_height = mean(height, na.rm = TRUE))
+
+average_height
+
+str(filtered_data)
+head(filtered_data)
+```
+
+#Zadatak 1: 
+##Kakva je distribucija razina kolesterola među različitim dobnim skupinama i spolovima?
+
+```{r}
+# Zadatak 1
+
+distribution <- filtered_data %>%
+  group_by(gender, cholesterol) %>%
+  summarise(count = n(),
+            percentage = n() / nrow(filtered_data) * 100)
+
+distribution
+
+ggplot(filtered_data, aes(x = cholesterol, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ AgeGroup) +
+  labs(title = "Distribucija kolesterola prema spolu i dobnoj skupini",
+       x = "Kategorije kolesterola",
+       y = "Broj uzoraka") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink"))
+
+```
+Sljedeći grafovi prikazuju raspodjelu postotka pripadnosti trima kategorijama kolesterola (zdrav, rizičan i opasan). Svaka skupina kolesterola (označena bojama) predstavlja određeni zdravstveni status:
+
+    Zdrav (1) – prikazan zelenkastom bojom,
+    Rizičan (2) – prikazan žutom bojom,
+    Opasan (3) – prikazan ljubičastom bojom.
+
+Prvi graf prikazuje raspodjelu unutar tri dobne skupine: 20-40 godina, 40-60 godina i iznad 60 godina.
+
+```{r}
+cholesterol_age <- filtered_data %>%
+  group_by(AgeGroup, cholesterol) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(AgeGroup) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(cholesterol_age, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ AgeGroup) +
+  labs(title = "Postotak kolesterola unutar dobnih skupina",
+       x = "Kategorija kolesterola",
+       y = "Postotak") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+```
+Zaključci sa grafa:
+  - Zdrava kategorija dominira u svakoj dobnoj skupini.
+  - Dobna skupina 20-40 ima najzdravije razine kolesterola, sa najmanjom zastupljenosti rizične ili opasne kategorije.
+  - Dobna skupina iznad 60 godina, iako još uvijek teži zdravoj kategoriji kolesterola, ima češću zastupljenost rizične ili opasne kategorije od ostalih grupa. Također je jedina grupa gdje je opasna kategorija češća od rizične.
+  
+Sljedeći graf prikazuje raspodjelu unutar spolova.
+```{r}
+cholesterol_gender <- filtered_data %>%
+  group_by(gender, cholesterol) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(gender) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(cholesterol_gender, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ gender) +
+  labs(title = "Postotak kolesterola unutar spolova",
+       x = "Kategorija kolesterola",
+       y = "Postotak") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+```
+Zaključci sa grafa:
+  - Zdrava kategorija dominira u svakom spolu.
+  - Ne pokazuju se značajne razlike u postotnoj distribuciji kategorija kolesterola.
+
+##Prikaz dodatnih distribucija
+
+Sljedeći grafovi prikazuju distribucija BMI-ja.
+Filtrirani grafovi služe kako bi lakše vidjeli tendenciju distribucije, fokusiranjem na češće iznose.
+
+Prvi grafovi prikazuju distribuciju BMI-ja po dobnim skupinama.
+
+```{r}
+
+BMI_filtered_data <- filtered_data %>% filter(BMI <= 60)
+
+ggplot(filtered_data, aes(x = BMI, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija BMI-ja prema dobnoj skupini",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(BMI_filtered_data, aes(x = BMI, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana Distribucija BMI-ja prema dobnoj skupini",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+Zaključak
+  - BMI teži iznosima između 20 i 30. Postoji značajna količina podataka koja se nalazi između 30 te opada prema 40. Ostali iznosi nisu bitno reprezentirani.
+
+Idući graf prikazuje distribuciju BMI-ja unutar spolova:
+```{r}
+ggplot(filtered_data, aes(x = BMI, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija BMI-ja prema spolu",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(BMI_filtered_data, aes(x = BMI, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija BMI-ja prema spolu",
+       x = "BMI",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+Zaključak
+  - BMI teži iznosima između 20 i 30. Postoji značajna količina podataka koja se nalazi između 30 te opada prema 40. Ostali iznosi nisu bitno reprezentirani.
+
+Sljedeći grafovi prikazuju distribucije iznosa sistoličkog i dijastoličkog krvnog tlaka..
+Filtrirani grafovi služe kako bi lakše vidjeli tendenciju distribucije, fokusiranjem na češće iznose.
+
+Prvi grafovi prikazuju distribucije krvnog tlaka prema dobnoj skupini:
+
+```{r}
+ap_filtered_data <- filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50)
+
+ggplot(filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija sistoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija dijastoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+
+
+```{r}
+ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija sistoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija dijastoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+Zaključak
+  - Krvni tlak ima višemodalnu distribuciju. 
+  - Najčešći iznos krvnog tlaka je 120/80.
+
+Prema spolu:
+```{r}
+ggplot(filtered_data, aes(x = ap_hi, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija sistoličkog krvnog tlaka prema spolu",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(filtered_data, aes(x = ap_lo, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribucija dijastoličkog krvnog tlaka prema spolu",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+
+```{r}
+ggplot(ap_filtered_data, aes(x = ap_hi, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija sistoličkog krvnog tlaka prema spolu",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+
+ggplot(ap_filtered_data, aes(x = ap_lo, color = gender, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija dijastoličkog krvnog tlaka prema spolu",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "pink")) +
+  scale_color_manual(values = c("blue", "pink"))
+```
+Zaključak
+  - Krvni tlak ima višemodalnu distribuciju. 
+  - Najčešći iznos krvnog tlaka je 120/80.
+
+```{r}
+set.seed(906) 
+filtered_data <- filtered_data %>%
+  mutate(
+    ap_hi = ap_hi + round(rnorm(n(), mean = -0.5, sd = 5 / 3)),
+    ap_lo = ap_lo + round(rnorm(n(), mean = -0.5, sd = 5 / 3))
+  )
+
+ap_filtered_data <- filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50)
+
+ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija sistoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Sistolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Filtrirana distribucija dijastoličkog krvnog tlaka prema dobnoj skupini",
+       x = "Dijastolički krvni tlak",
+       y = "Gustoća") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2")
+```
+
+#Zadatak 2
+
+
+Testiramo postoji li statistički značajna razlika u prosječnim krvnim tlakovima kod pušača i kod nepušača.Pušenje je kategorijska varijabla (razlikujemo pušače i nepušače, a nema podataka o tome koliko često tko puši). 
+```{r}
+data = healthDATA.modif
+names(data)
+summary(data$smoke)
+
+```
+Među podacima o krvnom tlaku ima besmislenih vrijednosti, poput negativnih brojeva ili jako niskih tlakova.
+```{r}
+data$ap_hi[data$ap_hi < 30]
+```
+
+
+Zato eliminiramo sve uzorke u kojima je zabilježen gornji (sistolički) tlak ispod 30 mmHg.
+
+```{r}
+ok = which(data$ap_hi >= 30)
+data2 = data[ok,]
+summary(data2$ap_hi)
+```
+Tlakove pušača i nepušača možemo prvo usporediti grafički pomoću box plotova. Imamo oko 6100 pušača i 63000 nepušača nakon eliminacije besmislenih vrijednosti, što znači da kasnije u testiranju možemo koristiti CGT. Vidimo da plotovi izgledaju dosta slično. I dalje postoji dosta outliera, pogotovo s visokim tlakom, ali nema ih smisla odbaciti kao pogrešna mjerenja jer je najveći tlak 240, što je sasvim moguće imati.
+
+```{r}
+pusaci = data2[data2["smoke"]==1,]
+nepusaci = data2[data2["smoke"]==0,]
+
+boxplot(nepusaci$ap_hi,
+        main='box-plot tlaka nepušača',
+        ylab='sistolički tlak/mmHg')
+boxplot(pusaci$ap_hi,
+        main='box-plot tlaka pušača',
+        ylab='sistolički tlak/mmHg')
+
+nrow(pusaci)
+nrow(nepusaci)
+
+```
+Najprije provjeravama jesu li podaci iz normalne razdiobe. Kako ne znamo koju konkretnu normalnu razdiobu očekujemo, koristimo Lillieforsov test. Posebno testiramo tlakove pušača i nepušača. Također radimo Q-Q plotove za vizualnu usporedbu.
+```{r}
+lillie.test(pusaci$ap_hi)
+lillie.test(nepusaci$ap_hi)
+qqnorm(pusaci$ap_hi)
+qqline(pusaci$ap_hi, col="blue")
+
+qqnorm(nepusaci$ap_hi)
+qqline(nepusaci$ap_hi, col="red")
+
+```
+Test odbacuje nul-hipotezu (da su podaci slučajan uzorak iz normalne razdiobe) za obje grupe. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu osim što ima vrlo teški rep prema većim vrijednostima, što je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu. Također uočavamo da su mjerenja zaokruživana pri unosu podataka.
+
+
+Treba provjeriti jesu li varijance grupa jednake. To radimo F-testom. Dobivamo vrlo malu p-vrijednost, pa odbacujemo hipotezu o jednskosti varijance. Pušači imaju statistički značajno veću varijancu u sistoličkom tlaku nego nepušači.
+```{r}
+var.test(nepusaci$ap_hi, pusaci$ap_hi)
+```
+
+Testiramo hipotezu o jednakosti prosječnih krvnih tlakova u obje grupe koristeći T test uz nepoznate i varijance. Ne uzimamo pretpostavku da su varijance jednake zbog rezultata prethodnih testova. 
+
+```{r}
+t.test(data2[data2["smoke"]==0,]$ap_hi, data2[data2["smoke"]==1,]$ap_hi, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+P vrijednost je vrlo mala pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti sistoličkih tlakova na razini značajnosti od 5%. Međutim, iako test pokazuje statistički značajnu razliku, procijenjene sredine su vrlo malo udaljene pa u praksi utjecaj pušenja na krvni tlak vjerojatno nije značajan.
+
+
+#Zadatak 3
+
+
+```{r}
+
+# Učitavanje podataka iz csv datoteke:
+healthDATA.modif = read.csv("Health Screening Data.csv")
+View(healthDATA.modif)
+
+```
+
+Podjela na dvije tablice: za aktivne i neaktivne
+```{r}
+
+# Funkcija za uklanjanje outliera
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR
+  upper <- Q3 + 1.5 * IQR
+  x[x >= lower & x <= upper]
+}
+
+# Filtriranje podataka za ap_lo i ap_hi:
+healthDATA.filtered <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  filter(ap_lo >= quantile(ap_lo, 0.25) - 1.5 * IQR(ap_lo) & 
+           ap_lo <= quantile(ap_lo, 0.75) + 1.5 * IQR(ap_lo)) %>%
+  filter(ap_hi >= quantile(ap_hi, 0.25) - 1.5 * IQR(ap_hi) & 
+           ap_hi <= quantile(ap_hi, 0.75) + 1.5 * IQR(ap_hi))
+
+
+# Generiranje box plotova bez outliera:
+boxplot(ap_lo ~ BMICat, 
+        data = healthDATA.filtered,
+        main = "Box Plot za ap_lo prema BMI kategorijama (bez outliera u podacima)",
+        xlab = "BMI Kategorije",
+        ylab = "ap_lo",
+        col = "lightblue")
+
+boxplot(ap_hi ~ BMICat, 
+        data = healthDATA.filtered,
+        main = "Box Plot za ap_hi prema BMI kategorijama (bez outliera u podacima)",
+        xlab = "BMI Kategorije",
+        ylab = "ap_hi",
+        col = "lightgreen")
+
+```
+
+
+Izračun prosječnih vrijedosti po tablici
+```{r}
+
+# Filtriranje podataka za kategoriju "Overweight":
+overweight_data <- healthDATA.modif %>%
+  filter(BMICat == "Over Weight")
+
+# Histogram distribucije ap_hi za Overweight:
+ggplot(overweight_data, aes(x = ap_hi)) +
+  geom_histogram(binwidth = 10, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribucija višeg tlaka (ap_hi) za Overweight",
+       x = "Visoki tlak (ap_hi)",
+       y = "Frekvencija") +
+  theme_minimal()
+
+# Density graf distribucije ap_hi za Overweight:
+ggplot(overweight_data, aes(x = ap_hi)) +
+  geom_density(fill = "lightgreen", alpha = 0.7) +
+  labs(title = "Gustoća distribucije višeg tlaka (ap_hi) za Overweight",
+       x = "Visoki tlak (ap_hi)",
+       y = "Gustoća") +
+  theme_minimal()
+
+
+
+```
+
+```{r}
+
+# Filtriranje podataka za kategoriju "Overweight":
+overweight_data <- healthDATA.modif %>%
+  filter(BMICat == "Over Weight")
+
+# Izračun kvartila za ap_hi:
+quartiles <- quantile(overweight_data$ap_hi, probs = c(0.25, 0.5, 0.75, 1.0), na.rm = TRUE)
+
+# Ispis rezultata:
+print(quartiles)
+
+```
+
+
+
+```{r}
+
+# Funkcija za uklanjanje outliera:
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR
+  upper <- Q3 + 1.5 * IQR
+  return(x[x >= lower & x <= upper])
+}
+
+# Filtriranje podataka za kategoriju "Overweight":
+overweight_data <- healthDATA.modif %>%
+  filter(BMICat == "Over Weight")
+
+# Uklanjanje outliera iz ap_hi:
+filtered_ap_hi <- remove_outliers(overweight_data$ap_hi)
+
+# Tablica frekvencija za ap_hi bez outliera:
+freq_table <- as.data.frame(table(filtered_ap_hi))
+
+# Dodavanje naziva stupaca:
+colnames(freq_table) <- c("Vrijednost_ap_hi", "Frekvencija")
+
+# Ispis tablice frekvencija:
+print(freq_table)
+
+```
+
+```{r}
+
+# Izračun srednje vrijednosti za sve podatke (sve BMI grupe zajedno) za ap_hi i ap_lo:
+srednja_sve <- healthDATA.modif %>%
+  summarise(Srednja_ap_hi = mean(ap_hi, na.rm = TRUE),
+            Srednja_ap_lo = mean(ap_lo, na.rm = TRUE))
+
+# Izračun srednje vrijednosti za svaku BMI grupu odvojeno za ap_hi i ap_lo:
+srednja_po_grupama <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  summarise(Srednja_ap_hi = mean(ap_hi, na.rm = TRUE),
+            Srednja_ap_lo = mean(ap_lo, na.rm = TRUE))
+
+# Ispis rezultata:
+cat("Srednje vrijednosti za sve BMI grupe zajedno:\n")
+print(srednja_sve)
+
+cat("\nSrednje vrijednosti za svaku BMI grupu odvojeno:\n")
+print(srednja_po_grupama)
+
+
+
+```
+
+```{r}
+
+
+# Provjera veličine svake BMI grupe
+velicine_grupa <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  summarise(Velicina = n())
+
+cat("Veličine BMI grupa:\n")
+print(velicine_grupa)
+
+# Kolmogorov-Smirnov test za normalnost za svaku grupu i za ap_hi i ap_lo
+ks_test_rezultati <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  summarise(
+    KS_ap_hi_stat = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$statistic,
+    KS_ap_hi_pval = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$p.value,
+    KS_ap_lo_stat = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$statistic,
+    KS_ap_lo_pval = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$p.value
+  )
+
+cat("\nKolmogorov-Smirnov test rezultati:\n")
+print(ks_test_rezultati)
+
+```
+
+
+```{r}
+
+
+# Funkcija za uklanjanje outliera:
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR
+  upper <- Q3 + 1.5 * IQR
+  return(ifelse(x >= lower & x <= upper, x, NA))
+}
+
+# Uklanjanje outliera za ap_hi i ap_lo:
+zd3_filtered_data <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  mutate(ap_hi_filtered = remove_outliers(ap_hi),
+         ap_lo_filtered = remove_outliers(ap_lo)) %>%
+  ungroup()
+
+# Priprema podataka za grafove:
+ap_hi_data <- zd3_filtered_data %>%
+  select(BMICat, ap_hi_filtered) %>%
+  rename(Value = ap_hi_filtered) %>%
+  mutate(Variable = "ap_hi")
+
+ap_lo_data <- zd3_filtered_data %>%
+  select(BMICat, ap_lo_filtered) %>%
+  rename(Value = ap_lo_filtered) %>%
+  mutate(Variable = "ap_lo")
+
+# Kombiniranje podataka:
+plot_data <- bind_rows(ap_hi_data, ap_lo_data)
+
+# Kreiranje histogram grafova s facet_wrap:
+ggplot(plot_data, aes(x = Value, fill = BMICat)) +
+  geom_histogram(binwidth = 6, color = "black", alpha = 0.7, position = "dodge") +
+  facet_wrap(~ Variable + BMICat, scales = "free", ncol = 2) +
+  labs(title = "Histogrami ap_hi i ap_lo prema BMI kategorijama (bez outliera)",
+       x = "Vrijednost",
+       y = "Frekvencija") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+```
+
+
+```{r}
+
+# Funkcija za zaokruživanje na najbliži višekratnik 5:
+round_to_nearest_5 <- function(x) {
+  round(x / 10) * 10
+}
+
+# Funkcija za uklanjanje outliera:
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR
+  upper <- Q3 + 1.5 * IQR
+  return(ifelse(x >= lower & x <= upper, x, NA))
+}
+
+# Uklanjanje outliera i zaokruživanje:
+zd3_filtered_data <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  mutate(
+    ap_hi = remove_outliers(ap_hi), # Ukloni outliere za ap_hi
+    ap_lo = remove_outliers(ap_lo), # Ukloni outliere za ap_lo
+    ap_hi = round_to_nearest_5(ap_hi), # Zaokruži na 5
+    ap_lo = round_to_nearest_5(ap_lo)  # Zaokruži na 5
+  ) %>%
+  ungroup()
+
+# Histogrami za ap_hi:
+hist_ap_hi <- ggplot(zd3_filtered_data, aes(x = ap_hi)) +
+  geom_histogram(binwidth = 5, color = "black", fill = "lightblue", alpha = 0.7) +
+  facet_wrap(~ BMICat, scales = "free_y", ncol = 2) +
+  labs(title = "Histograms for ap_hi (Rounded, Outliers Removed)",
+       x = "ap_hi (Rounded to 5)",
+       y = "Frequency") +
+  theme_minimal()
+
+# Histogrami za ap_lo:
+hist_ap_lo <- ggplot(zd3_filtered_data, aes(x = ap_lo)) +
+  geom_histogram(binwidth = 5, color = "black", fill = "lightgreen", alpha = 0.7) +
+  facet_wrap(~ BMICat, scales = "free_y", ncol = 2) +
+  labs(title = "Histograms for ap_lo (Rounded, Outliers Removed)",
+       x = "ap_lo (Rounded to 5)",
+       y = "Frequency") +
+  theme_minimal()
+
+# Q-Q grafovi za ap_hi:
+qq_ap_hi <- ggplot(zd3_filtered_data, aes(sample = ap_hi)) +
+  stat_qq() +
+  stat_qq_line() +
+  facet_wrap(~ BMICat, scales = "free", ncol = 2) +
+  labs(title = "Q-Q Plots for ap_hi (Rounded, Outliers Removed)",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+
+# Q-Q grafovi za ap_lo:
+qq_ap_lo <- ggplot(zd3_filtered_data, aes(sample = ap_lo)) +
+  stat_qq() +
+  stat_qq_line() +
+  facet_wrap(~ BMICat, scales = "free", ncol = 2) +
+  labs(title = "Q-Q Plots for ap_lo (Rounded, Outliers Removed)",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+
+# Prikaz svih grafova:
+print(hist_ap_hi)
+print(hist_ap_lo)
+print(qq_ap_hi)
+print(qq_ap_lo)
+
+
+
+
+
+```
+
+
+```{r}
+
+# Funkcija za zaokruživanje na najbliži višekratnik 10:
+round_to_nearest_10 <- function(x) {
+  round(x / 10) * 10
+}
+
+# Funkcija za uklanjanje outliera:
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR
+  upper <- Q3 + 1.5 * IQR
+  return(ifelse(x >= lower & x <= upper, x, NA))
+}
+
+# Uklanjanje outliera i zaokruživanje na 10:
+zd3_filtered_data <- healthDATA.modif %>%
+  group_by(BMICat) %>%
+  mutate(
+    ap_hi = remove_outliers(ap_hi), # Ukloni outliere za ap_hi
+    ap_lo = remove_outliers(ap_lo), # Ukloni outliere za ap_lo
+    ap_hi = round_to_nearest_10(ap_hi), # Zaokruži na 10
+    ap_lo = round_to_nearest_10(ap_lo)  # Zaokruži na 10
+  ) %>%
+  ungroup()
+
+# Provjera normalnosti za diskretne vrijednosti:
+ks_results_rounded_10 <- zd3_filtered_data %>%
+  group_by(BMICat) %>%
+  summarise(
+    KS_ap_hi_stat = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$statistic,
+    KS_ap_hi_pval = ks.test(ap_hi, "pnorm", mean(ap_hi, na.rm = TRUE), sd(ap_hi, na.rm = TRUE))$p.value,
+    KS_ap_lo_stat = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$statistic,
+    KS_ap_lo_pval = ks.test(ap_lo, "pnorm", mean(ap_lo, na.rm = TRUE), sd(ap_lo, na.rm = TRUE))$p.value
+  )
+
+# Histogrami za ap_hi i ap_lo:
+hist_ap_hi_10 <- ggplot(zd3_filtered_data, aes(x = ap_hi, fill = BMICat)) +
+  geom_histogram(binwidth = 10, color = "black", alpha = 0.7, position = "dodge") +
+  labs(title = "Histogram za ap_hi (zaokruženo na 10, bez outliera)",
+       x = "ap_hi (zaokruženo na 10)",
+       y = "Frekvencija") +
+  theme_minimal()
+
+hist_ap_lo_10 <- ggplot(zd3_filtered_data, aes(x = ap_lo, fill = BMICat)) +
+  geom_histogram(binwidth = 10, color = "black", alpha = 0.7, position = "dodge") +
+  labs(title = "Histogram za ap_lo (zaokruženo na 10, bez outliera)",
+       x = "ap_lo (zaokruženo na 10)",
+       y = "Frekvencija") +
+  theme_minimal()
+
+# Prikaz rezultata Kolmogorov-Smirnovog testa:
+cat("\nKolmogorov-Smirnov test za normalnost (zaokružene varijable na 10, bez outliera):\n")
+print(ks_results_rounded_10)
+
+# Prikaz histogram grafova:
+print(hist_ap_hi_10)
+print(hist_ap_lo_10)
+
+
+```
+
+```{r}
+
+# Leveneov test za ap_hi:
+levene_ap_hi <- leveneTest(ap_hi ~ BMICat, data = zd3_filtered_data, na.action = na.exclude)
+
+# Leveneov test za ap_lo:
+levene_ap_lo <- leveneTest(ap_lo ~ BMICat, data = zd3_filtered_data, na.action = na.exclude)
+
+# Prikaz rezultata:
+cat("Rezultati Leveneovog testa za ap_hi:\n")
+print(levene_ap_hi)
+
+cat("\nRezultati Leveneovog testa za ap_lo:\n")
+print(levene_ap_lo)
+
+```
+
+#Zadatak 4
+
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+ZADATAK 4. 
+"Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a,
+dobi i učestalosti tjelesne aktivnosti?"
+
+Ovo je postupak preko tablice kontingencije
+
+*analiza i argemntacija za filtriranje podataka
+Obratimo pažnju na sistolički krvni tlak "ap_hi". Htjeli bismo odrediti "outliere", imamo:
+$$IQR = 140.0 - 120.0 = 20$$
+Pa dobivamo za donju i gornju granicu:
+$$Q_1 - 1.5\cdot IQR = 90$$
+$$Q_3 + 1.5 \cdot IQR = 170$$
+Slično za dijastolički "ap_lo" imamo:
+$$IQR = 90 - 80 = 10$$
+$$Q_1 - 15 = 65$$
+$$Q_3 + 15 = 105$$
+Radi konciznosti parovi (donja granica, gornja granica) za relevantne vrijednosti su sljedeće:
+BMI: $(14.45, 39.65)$
+Dob ispitanika nismo odlučili filtrirati jer minimalna i maksimalna dob (29.5835 i 64.9671 godina) zdravorazumski ne predstavljaju "outliere".
+Prema ovim rezultatima ćemo filtrirati podatke.
+TRENUTNO LOGARITMIRAM PODATKE (ovo nije imalo previše uspjeha)
+
+```{r}
+library(tidyverse)
+filtered_data <- subset(healthDATA.modif, 
+                        BMI < 100
+                        & ap_hi > 90 & ap_hi < 170 
+                        & BMI > 14.45 & BMI < 39.65
+                        & ap_lo > 65 & ap_lo < 105) %>% mutate(logAp_hi = log(ap_hi))
+summary(filtered_data)
+
+
+```
+
+Sada metodom najmanjih kvadrata pokušavamo uspostaviti vezu između BMI-a i krvnog tlaka.
+Probali smo fiksirati nezavisne varijable
+
+```{r}
+fit.logAp_hi <- lm(logAp_hi ~ poly(BMI,1) , data = filtered_data)
+
+plot(filtered_data$BMI, filtered_data$logAp_hi, 
+     main = "Odnos sistoličkog krvnog tlaka i BMI-a",
+     xlab = "Body Mass Index (BMI)", 
+     ylab = "Sistolički krvni tlak (ap_hi)",
+     pch = 16, col = rgb(0, 0, 0, 0.5)) 
+
+
+sorted_index <- order(filtered_data$BMI) 
+lines(filtered_data$BMI[sorted_index], 
+      fit.logAp_hi$fitted.values[sorted_index], 
+      col = "red", lwd = 2) 
+
+summary(fit.logAp_hi)
+```
+Vidimo blagi pozitivan trend, ali koncentracija podataka oko vrijednosti krvnih tlakova djeljivih s 10 podiže sumnju na greške pri mjerenju. Također $R^2$ vrijednost je 0.0576 što je jako malo i povećanje stupnja polinoma ne mijenja značajno tu vrijednosti niti mijenja oblik modela, odnosno on uvijek izgleda kao ili slično pravcu.
+Analiza reziduala:
+```{r res}
+plot(fit.ap_hi$residuals,
+     main = "Graf reziduala (ap_hi)", 
+     ylab = "Reziduali", xlab = "BMI")
+
+hist(fit.ap_hi$residuals, 
+     breaks = 20, 
+     main = "Histogram Reziduala (ap_hi)", 
+     xlab = "Reziduali")
+
+hist(rstandard(fit.ap_hi), 
+     breaks = 20, 
+     main = "Histogram standardiziranih reziduala (ap_hi)", 
+     xlab = "Standardizirani reziduali")
+
+qqnorm(rstandard(fit.ap_hi), 
+       main = "Q-Q plot standardiziranih reziduala (ap_hi)")
+qqline(rstandard(fit.ap_hi), col = "red", lwd = 2)
+
+plot(fit.ap_hi$fitted.values, fit.ap_hi$residuals, 
+     main = "Reziduali u odnosu na fitane vrijednosti (ap_hi)", 
+     xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
+abline(h = 0, col = "red", lwd = 2)
+
+standardized_residuals <- rstandard(fit.ap_hi)
+
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+require(nortest)
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+Distribucija reziduala malo liči na normalnu, ali ne dovoljno da prođe testove normalnosti.
+
+Za dijastolički krvni tlak imamo:
+```{r}
+fit.ap_lo <- lm(ap_lo ~ poly(BMI, 1) , data = filtered_data)
+plot(filtered_data$BMI, filtered_data$ap_lo, 
+     main = "Odnos dijatoličkog krvnog tlaka i BMI-a",
+     xlab = "Body Mass Index (BMI)", 
+     ylab = "dijastolički krvni tlak (ap_lo)",
+     pch = 16, col = rgb(0, 0, 0, 0.5)) 
+
+
+sorted_index <- order(filtered_data$BMI) 
+lines(filtered_data$BMI[sorted_index], 
+      fit.ap_lo$fitted.values[sorted_index], 
+      col = "red", lwd = 2) 
+summary(fit.ap_lo)
+```
+Slično kao za ap_hi
+Analiza reziduala
+```{r}
+plot(fit.ap_lo$residuals,
+     main = "Graf reziduala (ap_lo)", 
+     ylab = "Reziduali", xlab = "BMI")
+
+hist(fit.ap_lo$residuals, 
+     breaks = 20, 
+     main = "Histogram Reziduala (ap_lo)", 
+     xlab = "Reziduali")
+
+hist(rstandard(fit.ap_lo), 
+     breaks = 20, 
+     main = "Histogram standardiziranih reziduala (ap_lo)", 
+     xlab = "Standardizirani reziduali")
+
+qqnorm(rstandard(fit.ap_lo), 
+       main = "Q-Q plot standardiziranih reziduala (ap_lo)")
+qqline(rstandard(fit.ap_lo), col = "red", lwd = 2)
+
+plot(fit.ap_lo$fitted.values, fit.ap_lo$residuals, 
+     main = "Reziduali u odnosu na fitane vrijednosti (ap_lo)", 
+     xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
+abline(h = 0, col = "red", lwd = 2)
+
+
+standardized_residuals <- rstandard(fit.ap_hi)
+
+ks_test <- ks.test(standardized_residuals, "pnorm")
+print(ks_test)
+
+lilliefors_test <- lillie.test(standardized_residuals)
+print(lilliefors_test)
+```
+Nemam pojma što s ovime raditi.
+
+
+Obratimo sada pažnju na drugi dio problema: "Možemo li predvidjeti krvni tlak na temelju BMI-a,
+dobi i učestalosti tjelesne aktivnosti?"
+
+Kada radimo na višestrukoj regrešiji želimo da nam regresori budu međusobno nezavisni. Stoga računamo covarijancu za sve parove od BMI, starosti i tjelesne aktivnosti.
+```{r}
+cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$age))
+```
+
+S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije loša ideja staviti ju u model višestruke regresije.
+
+```{r}
+fit.multi = lm(ap_hi ~ BMI + age + active, filtered_data)
+summary(fit.multi)
+```
+
+```{r}
+selected.model = fit.multi
+plot(selected.model$fitted.values,selected.model$residuals)
+plot(filtered_data$BMI, selected.model$residuals)
+plot(filtered_data$age, selected.model$residuals)
+```
+```{r}
+ks.test(rstandard(fit.multi),'pnorm')
+require(nortest)
+lillie.test(rstandard(fit.multi))
+```
+```{r}
+boxplot(ap_hi~active,data=filtered_data)
+
+boxplot(ap_lo~active,data=filtered_data)
+
+notA <- subset(filtered_data, active == 0)
+A <- subset(filtered_data, active == 1)
+mean(notA$ap_hi)
+mean(A$ap_hi)
+mean(notA$ap_lo)
+mean(A$ap_lo)
+```
+Iz grafova gore se ne čini kao da tjelesna aktivnost uopće utječe na krvni tlak.
