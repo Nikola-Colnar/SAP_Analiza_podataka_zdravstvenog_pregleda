@@ -1,19 +1,70 @@
 ---
-title: "R Notebook"
+title: "SAP projekt - Analiza podataka zdravstvenog pregleda"
+subtitle: "Ovisnost krvnog tlaka o pušenju" 
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
+Testiramo postoji li statistički značajna razlika u prosječnim krvnim tlakovima kod pušača i kod nepušača.Pušenje je kategorijska varijabla (razlikujemo pušače i nepušače, a nema podataka o tome koliko često tko puši). 
 ```{r}
-plot(cars)
+library(nortest)
+data = read.csv("Health Screening Data.csv")
+names(data)
+summary(data$smoke)
+
 
 ```
+Među podacima o krvnom tlaku ima besmislenih vrijednosti, poput negativnih brojeva ili jako niskih tlakova.
+```{r}
+data$ap_hi[data$ap_hi < 30]
+```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+Zato eliminiramo sve uzorke u kojima je zabilježen gornji (sistolički) tlak ispod 30 mmHg.
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+ok = which(data$ap_hi >= 30)
+data2 = data[ok,]
+summary(data2$ap_hi)
+```
+Tlakove pušača i nepušača možemo prvo usporediti grafički pomoću box plotova. Imamo oko 6100 pušača i 63000 nepušača nakon eliminacije besmislenih vrijednosti, što znači da kasnije u testiranju možemo koristiti CGT. Vidimo da plotovi izgledaju dosta slično. I dalje postoji dosta outliera, pogotovo s visokim tlakom, ali nema ih smisla odbaciti kao pogrešna mjerenja jer je najveći tlak 240, što je sasvim moguće imati.
+
+```{r}
+pusaci = data2[data2["smoke"]==1,]
+nepusaci = data2[data2["smoke"]==0,]
+
+boxplot(nepusaci$ap_hi,
+        main='box-plot tlaka nepušača',
+        ylab='sistolički tlak/mmHg')
+boxplot(pusaci$ap_hi,
+        main='box-plot tlaka pušača',
+        ylab='sistolički tlak/mmHg')
+
+nrow(pusaci)
+nrow(nepusaci)
+
+```
+Najprije provjeravama jesu li podaci iz normalne razdiobe. Kako ne znamo koju konkretnu normalnu razdiobu očekujemo, koristimo Lillieforsov test. Posebno testiramo tlakove pušača i nepušača. Također radimo Q-Q plotove za vizualnu usporedbu.
+```{r}
+lillie.test(pusaci$ap_hi)
+lillie.test(nepusaci$ap_hi)
+qqnorm(pusaci$ap_hi)
+qqline(pusaci$ap_hi, col="blue")
+
+qqnorm(nepusaci$ap_hi)
+qqline(nepusaci$ap_hi, col="red")
+
+```
+Test odbacuje nul-hipotezu (da su podaci slučajan uzorak iz normalne razdiobe) za obje grupe. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu osim što ima vrlo teški rep prema većim vrijednostima, što je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu. Također uočavamo da su mjerenja zaokruživana pri unosu podataka.
+
+
+Treba provjeriti jesu li varijance grupa jednake. To radimo F-testom. Dobivamo vrlo malu p-vrijednost, pa odbacujemo hipotezu o jednskosti varijance. Pušači imaju statistički značajno veću varijancu u sistoličkom tlaku nego nepušači.
+```{r}
+var.test(nepusaci$ap_hi, pusaci$ap_hi)
+```
+
+Testiramo hipotezu o jednakosti prosječnih krvnih tlakova u obje grupe koristeći T test uz nepoznate i varijance. Ne uzimamo pretpostavku da su varijance jednake zbog rezultata prethodnih testova. 
+
+```{r}
+t.test(data2[data2["smoke"]==0,]$ap_hi, data2[data2["smoke"]==1,]$ap_hi, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+P vrijednost je vrlo mala pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti sistoličkih tlakova na razini značajnosti od 5%. Međutim, iako test pokazuje statistički značajnu razliku, procijenjene sredine su vrlo malo udaljene pa u praksi utjecaj pušenja na krvni tlak vjerojatno nije značajan.
