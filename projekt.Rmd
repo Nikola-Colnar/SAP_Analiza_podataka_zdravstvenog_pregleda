@@ -19,6 +19,7 @@ library(lubridate)
 library(nortest)
 library(car)
 library(patchwork)
+library(gridExtra)
 ```
 # Tema projekta
 U ovom projektu analiziramo medicinske podatke i pokušavamo uz pomoć statističkih testova odgovoriti na razna pitanja o krvnom tlaku i njegovoj ovisnosti o dobi, indeksu tjelesne mase, životnim navikama i drugim varijablama čije su vrijednosti dostupne u uzorku. Za provedbu analize korišten je programski jezik R.
@@ -784,6 +785,7 @@ print(lilliefors_test)
 
 Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
 ```{r}
+
 plot1 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_hi$residuals), aes(x = x, y = y)) +
   geom_point() +
   labs(title = "Graf reziduala (ap_hi)", x = "BMI", y = "Reziduali") +
@@ -796,7 +798,7 @@ plot2 <- ggplot(data.frame(x = fit.ap_hi$residuals), aes(x = x)) +
 
 plot3 <- ggplot(data.frame(x = rstandard(fit.ap_hi)), aes(x = x)) +
   geom_histogram(bins = 20, fill = "green", color = "black") +
-  labs(title = "Histogram standardiziranih reziduala (ap_hi)", x = "Standardizirani reziduali", y = "Frekvencija") +
+  labs(title = "Standardizirani reziduali (ap_hi)", x = "Standardizirani reziduali", y = "Frekvencija") +
   theme_minimal()
 
 plot4 <- ggplot(data.frame(sample = rstandard(fit.ap_hi)), aes(sample = sample)) +
@@ -811,8 +813,11 @@ plot5 <- ggplot(data.frame(x = fit.ap_hi$fitted.values, y = fit.ap_hi$residuals)
   labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_hi)", x = "Fitane vrijednosti", y = "Reziduali") +
   theme_minimal()
 
-(plot1 + plot2) / (plot3 + plot5)
+grid.arrange(plot1, plot2, plot3, plot5,
+             heights = c(1,1), widths = c(1,1))
+# (plot1 + plot2) / (plot3 + plot5)
 ```
+
 
 ```{r}
 plot4
@@ -868,7 +873,7 @@ plot7 <- ggplot(data.frame(x = fit.ap_lo$residuals), aes(x = x)) +
 
 plot8 <- ggplot(data.frame(x = rstandard(fit.ap_lo)), aes(x = x)) +
   geom_histogram(bins = 20, fill = "green", color = "black") +
-  labs(title = "Histogram standardiziranih reziduala (ap_lo)",
+  labs(title = "Standardizirani reziduali (ap_lo)",
        x = "Standardizirani reziduali", y = "Frekvencija") +
   theme_minimal()
 
@@ -883,7 +888,7 @@ plot9 <- ggplot(data.frame(sample = rstandard(fit.ap_lo)),
 plot10 <- ggplot(data.frame(x = fit.ap_lo$fitted.values,
                             y = fit.ap_lo$residuals), aes(x = x, y = y)) +
   geom_point(pch = 16) +
-  geom_hline(yintercept = 0, color = "red", linetype = "filled", lwd = 1.2) +
+  geom_hline(yintercept = 0, color = "red", linetype = "solid", lwd = 1.2) +
   labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_lo)",
        x = "Fitane vrijednosti", y = "Reziduali") +
   theme_minimal()
