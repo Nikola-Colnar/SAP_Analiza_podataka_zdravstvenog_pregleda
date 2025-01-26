@@ -853,30 +853,40 @@ print(lilliefors_test)
 Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
 
 ```{r}
-plot(fit.ap_lo$residuals,
-     main = "Graf reziduala (ap_lo)", 
-     ylab = "Reziduali", xlab = "BMI")
+plot1 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_lo$residuals), aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = "Graf reziduala (ap_lo)", x = "BMI", y = "Reziduali") +
+  theme_minimal()
 
-hist(fit.ap_lo$residuals, 
-     breaks = 20, 
-     main = "Histogram Reziduala (ap_lo)", 
-     xlab = "Reziduali")
+plot2 <- ggplot(data.frame(x = fit.ap_lo$residuals), aes(x = x)) +
+  geom_histogram(bins = 20, fill = "blue", color = "black") +
+  labs(title = "Histogram Reziduala (ap_lo)", x = "Reziduali", y = "Frekvencija") +
+  theme_minimal()
 
-hist(rstandard(fit.ap_lo), 
-     breaks = 20, 
-     main = "Histogram standardiziranih reziduala (ap_lo)", 
-     xlab = "Standardizirani reziduali")
+plot3 <- ggplot(data.frame(x = rstandard(fit.ap_lo)), aes(x = x)) +
+  geom_histogram(bins = 20, fill = "green", color = "black") +
+  labs(title = "Histogram standardiziranih reziduala (ap_lo)", x = "Standardizirani reziduali", y = "Frekvencija") +
+  theme_minimal()
 
-qqnorm(rstandard(fit.ap_lo), 
-       main = "Q-Q plot standardiziranih reziduala (ap_lo)")
-qqline(rstandard(fit.ap_lo), col = "red", lwd = 2)
+plot4 <- ggplot(data.frame(sample = rstandard(fit.ap_lo)), aes(sample = sample)) +
+  stat_qq() +
+  stat_qq_line(color = "red", lwd = 1.2) +
+  labs(title = "Q-Q plot standardiziranih reziduala (ap_lo)", x = "Teorijske kvantile", y = "Standardizirani reziduali") +
+  theme_minimal()
 
-plot(fit.ap_lo$fitted.values, fit.ap_lo$residuals, 
-     main = "Reziduali u odnosu na fitane vrijednosti (ap_lo)", 
-     xlab = "Fitane vrijednosti", ylab = "Reziduali", pch = 16)
-abline(h = 0, col = "red", lwd = 2)
+plot5 <- ggplot(data.frame(x = fit.ap_lo$fitted.values, y = fit.ap_lo$residuals), aes(x = x, y = y)) +
+  geom_point(pch = 16) +
+  geom_hline(yintercept = 0, color = "red", linetype = "filled", lwd = 1.2) +
+  labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_lo)", x = "Fitane vrijednosti", y = "Reziduali") +
+  theme_minimal()
 
+(plot1 + plot2) / (plot3 + plot5)
 ```
+
+```{r}
+plot4
+```
+
 Grafički možemo reći da reziduali imaju teže repove.
 Nemoguće je (na temelju ovih podataka) predvidjeti dijastolički krvni tlak iz BMI-a.
 
@@ -895,7 +905,7 @@ cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$AgeinYr))
 ```
 Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne. 
 
-### Višestruka regresija za sistolički tlak
+### Višestruka regresija za krvni tlak
 
 ```{r}
 fit.multi_hi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
@@ -966,10 +976,11 @@ plot6 <- ggplot(data.frame(x = filtered_data$age, y = selected.model_ap_lo$resid
 ```{r}
  (plot3 + plot6)
 ```
-
+Zaključak je da reziduali nisu distribuirani normalno.
 
 #### Zaključak
-Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati sistolički krvni tlak.
+Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati sistolički i dijastolički krvni tlak.
+
 ### Višestruka regresija za dijastolički tlak
 Sada ponavljamo isti postupak za dijastolički tlak.
 
@@ -984,15 +995,8 @@ U nastavku testiramo normalnost reziduala.
 
 
 ```
-Zaključak je da reziduali nisu distribuirani normalno. Možemo vidjeti njihov grafički prikaz u nastavku.
-```{r}
-
-```
 
 
-#### Zaključak
-
-Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati dijastolički krvni tlak.
 # Zaključak projekta
 
 Na temelju provedene analize možemo zaključiti da skup podataka o zdravstvenim informacijama nudi važne uvide, ali i pokazuje određene nedostatke koji utječu na kvalitetu interpretacije. Uočena je visoka prisutnost zdravih kategorija kolesterola u svim skupinama, dok starije dobne skupine pokazuju povećan rizik za opasne razine kolesterola. Slično tome, distribucija BMI-ja i krvnog tlaka ukazuje na određene tendencije, ali analize sugeriraju da predikcija krvnog tlaka na temelju BMI-a i dodatnih varijabli ima ograničenu pouzdanost.
