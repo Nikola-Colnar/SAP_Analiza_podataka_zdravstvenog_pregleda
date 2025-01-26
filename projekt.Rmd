@@ -37,7 +37,7 @@ for (p in healthDATA.modif$ap_hi) {
 }
 weird / total
 ```
-##Filtriranje podataka
+## Filtriranje podataka
 
 Početna faza analize uključila je čišćenje podataka korištenjem više kriterija. Eliminirane su sve observacije s nelogičnim vrijednostima tlaka (npr. negativne vrijednosti) te slučajevi gdje maksimalni tlak prelazi minimalni. Dodatno, izbačeni su ekstremni BMI-ovi te restrigirani na raspone unutar NHS inform podataka. (Izvor: https://www.nhsinform.scot/healthy-living/food-and-nutrition/healthy-eating-and-weight-management/body-mass-index-bmi/)
 
@@ -81,8 +81,8 @@ average_height
 #head(filtered_data)
 ```
 
-#Zadatak 1: 
-##Kakva je distribucija razina kolesterola među različitim dobnim skupinama i spolovima?
+# Zadatak 1: 
+## Kakva je distribucija razina kolesterola među različitim dobnim skupinama i spolovima?
 
 ```{r}
 # Zadatak 1
@@ -156,7 +156,7 @@ Zaključci sa grafa:
   - Zdrava kategorija dominira u svakom spolu.
   - Razlike između spolova u distribuciji kategorija kolesterola nisu značajne.
 
-##Prikaz dodatnih distribucija
+## Prikaz dodatnih distribucija
 
 Također nas zanima kako su u uzorku distribuirani indeks tjelesne mase te krvni tlak.
 Fokusirani grafovi prikazuju češće vrijednosti kako bi se istaknula opća tendencija.
@@ -321,7 +321,7 @@ qqline(nepusaci$ap_hi, col="red")
 
 Test odbacuje nul-hipotezu za obje grupe. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu za vrijednosti oko prosjeka i manje, ali ima vrlo teški gornji rep. To je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu.
 
-Treba provjeriti jesu li varijance grupa jednake. Provodimo F-test za jednakost varijanci sitoličkih tlakova nepušača i pušača. Dobivamo vrlo malu p-vrijednost, pa odbacujemo nul-hipotezu. Procijenjeni omjer varijanci je oko 0.9, dakle pušači imaju veću varijancu u sistoličkom tlaku nego nepušači. Poznato je da pušenje uzrokuje kratkotrajni porast krvnog tlaka. Moguće je tlakovi pušača više variraju jer su nekim pušačima tlakovi izmjereni ubrzo nakon pušenja, a nekima nakon nekoliko sati bez cigareta. U svakom slučaju, ne možemo pretpostaviti jednakost varijanci u daljnjim testovima.
+Treba provjeriti jesu li varijance grupa jednake. Provodimo F-test za jednakost varijanci sistoličkih tlakova nepušača i pušača s razinom značajnosti 5%. Dobivamo vrlo malu p-vrijednost, pa odbacujemo nul-hipotezu. Procijenjeni omjer varijanci je oko 0.9, dakle pušači imaju veću varijancu u sistoličkom tlaku nego nepušači. Poznato je da pušenje uzrokuje kratkotrajni porast krvnog tlaka. Moguće je tlakovi pušača više variraju jer su nekim pušačima tlakovi izmjereni ubrzo nakon pušenja, a nekima nakon nekoliko sati bez cigareta. Neovisno o točnosti te teorije, tet pokazuje da ne možemo pretpostaviti jednakost varijanci u daljnjim testovima.
 
 ```{r}
 var.test(nepusaci$ap_hi, pusaci$ap_hi)
