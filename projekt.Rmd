@@ -287,7 +287,7 @@ ap_hi_distribution_g3 + ap_lo_distribution_g3
 
 Testiramo postoji li statistički značajna razlika u prosječnim krvnim tlakovima kod pušača i kod nepušača. Pušenje je kategorijska varijabla (razlikujemo pušače i nepušače, a nema podataka o tome koliko često tko puši).
 
-Tlakove pušača i nepušača možemo prvo usporediti grafički pomoću box plotova. U uzorku preostaje oko 6100 pušača i 63000 nepušača nakon eliminacije besmislenih vrijednosti, što znači da imamo dovoljno podataka da kasnije u testiranju možemo koristiti centralni granični teorem. Vidimo da plotovi izgledaju dosta slično. I dalje postoji dosta outliera, pogotovo s visokim tlakom, ali nema ih smisla odbaciti kao pogrešna mjerenja jer je najveći tlak 240, što je sasvim moguća vrijednost.
+Tlakove pušača i nepušača možemo prvo usporediti grafički pomoću box plotova. U uzorku preostaje oko 6100 pušača i 63000 nepušača nakon eliminacije besmislenih vrijednosti, što znači da imamo dovoljno podataka da kasnije u testiranju možemo koristiti centralni granični teorem. Vidimo da plotovi izgledaju dosta slično za te dvije grupe. I dalje postoji dosta outliera, pogotovo s visokim tlakom, ali nema ih smisla odbaciti kao pogrešna mjerenja jer je najveći tlak 240, što je sasvim moguća vrijednost.
 
 ```{r}
 pusaci = filtered_data[filtered_data["smoke"]==1,]
@@ -295,12 +295,13 @@ nepusaci = filtered_data[filtered_data["smoke"]==0,]
 nrow(pusaci)
 nrow(nepusaci)
 
-boxplot(nepusaci$ap_hi,
-        main='box-plot tlaka nepušača',
-        ylab='sistolički tlak/mmHg')
-boxplot(pusaci$ap_hi,
-        main='box-plot tlaka pušača',
-        ylab='sistolički tlak/mmHg')
+par(mfrow=c(1,2))
+bpd <- data.frame(sistolički=pusaci$ap_hi, dijastolički=pusaci$ap_lo)
+boxplot(bpd, main='box-plot tlaka pušača',
+        ylab='tlak/mmHg')
+bpd <- data.frame(sistolički=nepusaci$ap_hi, dijastolički=nepusaci$ap_lo)
+boxplot(bpd, main='box-plot tlaka nepušača',
+        ylab='tlak/mmHg')
 
 ```
 
