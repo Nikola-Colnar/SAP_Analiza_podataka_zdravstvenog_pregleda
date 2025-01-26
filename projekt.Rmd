@@ -320,26 +320,28 @@ qqnorm(pusaci$ap_hi, main = "sist. tlak pušača", xlab="kvantili normalne razdi
 qqline(pusaci$ap_hi, col="blue")
 qqnorm(nepusaci$ap_hi, main = "sist. tlak nepušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
 qqline(nepusaci$ap_hi, col="red")
-qqnorm(pusaci$ap_hi, main = "dijast. tlak pušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
-qqline(pusaci$ap_hi, col="blue")
-qqnorm(nepusaci$ap_hi, main = "dijast. tlak nepušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
-qqline(nepusaci$ap_hi, col="red")
+qqnorm(pusaci$ap_lo, main = "dijast. tlak pušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqline(pusaci$ap_lo, col="blue")
+qqnorm(nepusaci$ap_lo, main = "dijast. tlak nepušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqline(nepusaci$ap_lo, col="red")
 ```
 
 Svi testovi odbacuju nul-hipotezu. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu za vrijednosti oko prosjeka i manje, ali ima vrlo teški gornji rep. To je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu.
 
-Treba provjeriti jesu li varijance grupa jednake. Provodimo F-test za jednakost varijanci sistoličkih tlakova nepušača i pušača s razinom značajnosti 5%. Dobivamo vrlo malu p-vrijednost, pa odbacujemo nul-hipotezu. Procijenjeni omjer varijanci je oko 0.9, dakle pušači imaju veću varijancu u sistoličkom tlaku nego nepušači. Poznato je da pušenje uzrokuje kratkotrajni porast krvnog tlaka. Moguće je tlakovi pušača više variraju jer su nekim pušačima tlakovi izmjereni ubrzo nakon pušenja, a nekima nakon nekoliko sati bez cigareta. Neovisno o točnosti te teorije, tet pokazuje da ne možemo pretpostaviti jednakost varijanci u daljnjim testovima.
+Treba provjeriti jesu li varijance grupa jednake. Provodimo F-test za jednakost varijanci sistoličkih tlakova nepušača i pušača s razinom značajnosti 5%. Dobivamo vrlo malu p-vrijednost, pa odbacujemo nul-hipotezu. Procijenjeni omjer varijanci je oko 0.9 za sistoličke i 0.92 za dijastoličke tlakove, dakle pušači imaju veću varijancu u tlaku nego nepušači. Poznato je da pušenje uzrokuje kratkotrajni porast krvnog tlaka. Moguće je tlakovi pušača više variraju jer su nekim pušačima tlakovi izmjereni ubrzo nakon pušenja, a nekima nakon nekoliko sati bez cigareta. Neovisno o točnosti te teorije, testovi pokazuju da ne možemo pretpostaviti jednakost varijanci u daljnjim testovima.
 
 ```{r}
 var.test(nepusaci$ap_hi, pusaci$ap_hi)
+var.test(nepusaci$ap_lo, pusaci$ap_lo)
 ```
 
-Testiramo hipotezu o jednakosti prosječnih krvnih tlakova u obje grupe koristeći T test za neuparene podatke uz nepoznate i nejednake varijance na razini značajnosti od 5%. Ne uzimamo pretpostavku da su varijance jednake zbog rezultata prethodnog testa. 
+Testiramo hipotezu o jednakosti prosječnih krvnih tlakova pušača i nepušača koristeći dvostrani t-test za neuparene podatke uz nepoznate i nejednake varijance na razini značajnosti od 5%. Test neće biti egzaktan jer nije zadovoljena pretpostavka o normalnosti. Ipak, možemo ga koristiti zbog dovoljne veličine uzorka i robusnosti testa na odstupanje podataka od normalne distribucije. Ne uzimamo pretpostavku da su varijance jednake zbog rezultata F testa.
 
 ```{r}
-t.test(filtered_data[filtered_data["smoke"]==0,]$ap_hi, filtered_data[filtered_data["smoke"]==1,]$ap_hi, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+t.test(pusaci$ap_hi, nepusaci$ap_hi, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+t.test(pusaci$ap_lo, nepusaci$ap_lo, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
 ```
-Dobivena P vrijednost je vrlo mala pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti sistoličkih tlakova na razini značajnosti od 5%. Test pokazuje statistički značajnu razliku, no procijenjena razlika sredina je mala u odnosu na 30 mmHg koliko otprilike iznosi širina intervala normalnih tlakova pa je značaj te razlike u praksi upitan.
+Dobivene P vrijednosti su vrlo male pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti tlakova na razini značajnosti od 5% i za sistoličke i za dijastoličke. Test pokazuje statistički značajne razlike, no procijenjene razlika sredina su male u odnosu na 30 mmHg koliko otprilike iznosi širina intervala normalnih tlakova pa je značaj tih razlika u praksi upitan.
 
 
 # Zadatak 3
