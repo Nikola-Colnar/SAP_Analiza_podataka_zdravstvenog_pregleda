@@ -9,6 +9,7 @@ output:
   word_document: default
 editor_options:
   chunk_output_type: inline
+geometry: top=1in, bottom=1in, left=0.5in, right=0.5in
 ---
 
 
@@ -945,9 +946,12 @@ plot10 <- ggplot(data.frame(x = fit.ap_lo$fitted.values,
   labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_lo)",
        x = "Fitane vrijednosti", y = "Reziduali") +
   theme_minimal()
+combined_plot <- (plot6 + plot7) / (plot8 + plot10)
+print(combined_plot)
 
-(plot6 + plot7) / (plot8 + plot10)
+
 ```
+
 
 
 ```{r}
