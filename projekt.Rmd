@@ -614,7 +614,7 @@ print(kruskal_lo)
 Sada ćemo metodom najmanjih kvadrata pokušati uspostaviti vezu između BMI-a i krvnog tlaka.
 ```{r}
 
-fit.ap_hi <- lm(ap_hi ~ poly(BMI,3) , data = filtered_data)
+fit.ap_hi <- lm(ap_hi ~ poly(BMI,1) , data = filtered_data)
 
 plot(filtered_data$BMI, filtered_data$ap_hi, 
      main = "Odnos sistoličkog krvnog tlaka i BMI-a",
