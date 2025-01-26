@@ -343,7 +343,7 @@ Za početak, kako bismo dobili dojam o utjecaju tjelesne aktivnosti, crtamo box 
 ```{r}
 
 # Kreiranje boxplota za ap_hi
-p1 <- ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_hi)) +
+p1 <- ggplot(filtered_data, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_hi)) +
   geom_boxplot(fill = "lightblue") +
   theme_minimal(base_size = 12) +
   labs(title = "Sistolički tlak prema aktivnosti \n",
@@ -356,7 +356,7 @@ p1 <- ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Ac
   )
 
 # Kreiranje boxplota za ap_lo
-p2 <- ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_lo)) +
+p2 <- ggplot(filtered_data, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_lo)) +
   geom_boxplot(fill = "lightgreen") +
   theme_minimal(base_size = 12) +
   labs(title = "Dijastolički tlak prema aktivnosti \n",
@@ -388,7 +388,7 @@ Za određivanje možemo li koristiti t-test, provjeravamo njegove pretpostavke. 
 
 ```{r}
 # Kreiranje histogramova za ap_hi
-hist_hi <- ggplot(healthDATA.clean, aes(x = ap_hi, fill = factor(active, labels = c("Inactive", "Active")))) +
+hist_hi <- ggplot(filtered_data, aes(x = ap_hi, fill = factor(active, labels = c("Inactive", "Active")))) +
   geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
   theme_minimal(base_size = 10) +
   labs(title = "Histogram sistoličkog tlaka \nprema aktivnosti", 
@@ -402,7 +402,7 @@ hist_hi <- ggplot(healthDATA.clean, aes(x = ap_hi, fill = factor(active, labels 
   )
 
 # Kreiranje histogramova za ap_lo
-hist_lo <- ggplot(healthDATA.clean, aes(x = ap_lo, fill = factor(active, labels = c("Inactive", "Active")))) +
+hist_lo <- ggplot(filtered_data, aes(x = ap_lo, fill = factor(active, labels = c("Inactive", "Active")))) +
   geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
   theme_minimal(base_size = 10) +
   labs(title = "Histogram dijastoličkog tlaka \nprema aktivnosti", 
@@ -416,7 +416,7 @@ hist_lo <- ggplot(healthDATA.clean, aes(x = ap_lo, fill = factor(active, labels 
   )
 
 # Kreiranje Q-Q plotova za ap_hi
-qq_hi <- ggplot(healthDATA.clean, aes(sample = ap_hi)) +
+qq_hi <- ggplot(filtered_data, aes(sample = ap_hi)) +
   stat_qq(color = "darkblue") +
   stat_qq_line(color = "red") +
   facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
@@ -432,7 +432,7 @@ qq_hi <- ggplot(healthDATA.clean, aes(sample = ap_hi)) +
   )
 
 # Kreiranje Q-Q plotova za ap_lo
-qq_lo <- ggplot(healthDATA.clean, aes(sample = ap_lo)) +
+qq_lo <- ggplot(filtered_data, aes(sample = ap_lo)) +
   stat_qq(color = "darkgreen") +
   stat_qq_line(color = "red") +
   facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
@@ -509,13 +509,9 @@ cat("F-test za ap_lo: p-value:", f_test_lo$p.value, "\n")
 Iz rezultata vidimo da možemo odbaciti nultu hipotezu o normalnosti distribucija, dok iz F-testa vidimo da ne odbacujemo nultu hipotezu o jednakosti varijanci dviju distribucija. Unatoč nenormalnosti distribucija, provest ćemo t-test za usporedbu sredina budući da je robustan na nenormalnost uzorka. Ipak, provest ćemo i neparametarsku alternativu t-testu, Mann-Whitney-Wilcoxonov test.
 
 ```{r}
-
-# Učitavanje potrebnih paketa
-library(dplyr)
-
 # Podjela podataka prema aktivnosti
-active_data <- healthDATA.clean %>% filter(active == 1)
-inactive_data <- healthDATA.clean %>% filter(active == 0)
+active_data <- filtered_data %>% filter(active == 1)
+inactive_data <- filtered_data %>% filter(active == 0)
 
 # 1) Standardni t-test
 cat("\n===== t-test za ap_hi =====\n")
@@ -545,9 +541,9 @@ Ipak, zanima nas i razlikuje li se značajno prosječni krvni tlak među skupina
 ```{r}
 
 # Kreiranje boxplota za ap_hi po BMICat
-p_hi <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_hi)) + 
+p_hi <- ggplot(filtered_data, aes(x = BMICat, y = ap_hi)) + 
   geom_boxplot(fill = "skyblue", alpha = 0.7, outlier.color = "red") +
-  geom_hline(yintercept = mean(healthDATA.clean$ap_hi), 
+  geom_hline(yintercept = mean(filtered_data$ap_hi), 
              color = "red", linetype = "dashed", size = 1) +
   labs(title = "Sistolički tlak po BMI kategorijama \n",
        x = "BMI kategorija", 
@@ -564,9 +560,9 @@ p_hi <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_hi)) +
   )
 
 # Kreiranje boxplota za ap_lo po BMICat
-p_lo <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_lo)) + 
+p_lo <- ggplot(filtered_data, aes(x = BMICat, y = ap_lo)) + 
   geom_boxplot(fill = "orange", alpha = 0.7, outlier.color = "blue") +
-  geom_hline(yintercept = mean(healthDATA.clean$ap_lo), 
+  geom_hline(yintercept = mean(filtered_data$ap_lo), 
              color = "red", linetype = "dashed", size = 1) +
   labs(title = "Dijastolički tlak po BMI kategorijama \n",
        x = "BMI kategorija", 
@@ -596,7 +592,7 @@ Prema box plotovima vidimo da je za očekivati kako se prosječni tlakovi znača
 ```{r}
 for (bmi_cat in bmi_categories) {
   
-  data_subset <- healthDATA.clean %>% filter(BMICat == bmi_cat)
+  data_subset <- filtered_data %>% filter(BMICat == bmi_cat)
   
   hist_hi <- ggplot(data_subset, aes(x = ap_hi)) +
     geom_histogram(binwidth = 2, fill = "blue", color = "black", alpha = 0.7) +
@@ -650,16 +646,12 @@ for (bmi_cat in bmi_categories) {
 Nakon crtanja histograma i Q-Q plotova dobivamo dojam da skupine ne ispunjavaju uvjet normalnosti, ali svejedno ćemo provesti Kolmogorov-Smirnovljev test kako bismo tu tvrdnju dodatno provjerili. Također, provest ćemo i Bartlettov test za provjeru homoskedastičnosti, koja je još bitnija pretpostavka ANOVE.
 
 ```{r}
-# Potrebne biblioteke
-library(dplyr)
-library(car)  # za Leveneov test
-
 # 1) Test normalnosti po grupama (Kolmogorov-Smirnov)
-bmi_categories <- unique(healthDATA.clean$BMICat)
+bmi_categories <- unique(filtered_data$BMICat)
 
 for (bmi_cat in bmi_categories) {
   
-  data_subset <- healthDATA.clean %>%
+  data_subset <- filtered_data %>%
     filter(BMICat == bmi_cat)
   
   cat("==================================================\n")
@@ -692,12 +684,12 @@ cat("     Test homoskedastičnosti (BartlettTest)\n")
 cat("==================================================\n")
 
 # Bartlettov test za sistolički tlak
-bartlett_hi <- bartlett.test(ap_hi ~ BMICat, data = healthDATA.clean)
+bartlett_hi <- bartlett.test(ap_hi ~ BMICat, data = filtered_data)
 cat("\nBartlett test: ap_hi ~ BMICat\n")
 print(bartlett_hi)
 
 # Bartlettov test za dijastolički tlak
-bartlett_lo <- bartlett.test(ap_lo ~ BMICat, data = healthDATA.clean)
+bartlett_lo <- bartlett.test(ap_lo ~ BMICat, data = filtered_data)
 cat("\nBartlett test: ap_lo ~ BMICat\n")
 print(bartlett_lo)
 
@@ -708,12 +700,12 @@ Iščitavanjem p-vrijednosti iz testova možemo odbaciti pretpostavke o normalno
 
 ```{r}
 # Kruskal-Wallis za sistolički tlak
-kruskal_hi <- kruskal.test(ap_hi ~ BMICat, data = healthDATA.clean)
+kruskal_hi <- kruskal.test(ap_hi ~ BMICat, data = filtered_data)
 cat("----- Kruskal-Wallis Test za sistolički tlak -----\n")
 print(kruskal_hi)
 
 # Kruskal-Wallis za dijastolički tlak
-kruskal_lo <- kruskal.test(ap_lo ~ BMICat, data = healthDATA.clean)
+kruskal_lo <- kruskal.test(ap_lo ~ BMICat, data = filtered_data)
 cat("\n----- Kruskal-Wallis Test za dijastolički tlak -----\n")
 print(kruskal_lo)
 
