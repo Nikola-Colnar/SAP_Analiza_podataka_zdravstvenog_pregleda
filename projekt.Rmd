@@ -20,7 +20,7 @@ library(car)
 library(patchwork)
 ```
 
-#Inicijalni koraci projekta
+# Inicijalni koraci projekta
 ## Učitavanje podataka
 
 ```{r, include=FALSE}
@@ -282,8 +282,8 @@ ap_lo_distribution_g3 <- ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGrou
 ap_hi_distribution_g3 + ap_lo_distribution_g3
 ```
 
-#Zadatak 2
-##Postoji li značajna razlika u prosječnom krvnom tlaku izmedu pušača i nepušača?
+# Zadatak 2
+## Postoji li značajna razlika u prosječnom krvnom tlaku izmedu pušača i nepušača?
 
 Testiramo postoji li statistički značajna razlika u prosječnim krvnim tlakovima kod pušača i kod nepušača. Pušenje je kategorijska varijabla (razlikujemo pušače i nepušače, a nema podataka o tome koliko često tko puši).
 
@@ -335,8 +335,8 @@ t.test(filtered_data[filtered_data["smoke"]==0,]$ap_hi, filtered_data[filtered_d
 Dobivena P vrijednost je vrlo mala pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti sistoličkih tlakova na razini značajnosti od 5%. Test pokazuje statistički značajnu razliku, no procijenjena razlika sredina je mala u odnosu na 30 mmHg koliko otprilike iznosi širina intervala normalnih tlakova pa je značaj te razlike u praksi upitan.
 
 
-#Zadatak 3
-##Razlikuje li se prosječni krvni tlak značajno medu skupinama s različitom učestalošću tjelesne aktivnosti?
+# Zadatak 3
+## Razlikuje li se prosječni krvni tlak značajno medu skupinama s različitom učestalošću tjelesne aktivnosti?
 
 Za početak, kako bismo dobili dojam o utjecaju tjelesne aktivnosti, crtamo box plotove za sistolički i dijastolički krvni tlak grupirane prema tjelesnoj aktivnosti.
 
@@ -907,7 +907,7 @@ mean(A$ap_lo)
 
 Iz grafova gore se ne čini kao da tjelesna aktivnost uopće utječe na krvni tlak.
 
-#Zaključak projekta
+# Zaključak projekta
 
 Na temelju provedene analize možemo zaključiti da skup podataka o zdravstvenim informacijama nudi važne uvide, ali i pokazuje određene nedostatke koji utječu na kvalitetu interpretacije. Uočena je visoka prisutnost zdravih kategorija kolesterola u svim skupinama, dok starije dobne skupine pokazuju povećan rizik za opasne razine kolesterola. Slično tome, distribucija BMI-ja i krvnog tlaka ukazuje na određene tendencije, ali analize sugeriraju da predikcija krvnog tlaka na temelju BMI-a i dodatnih varijabli ima ograničenu pouzdanost.
 
