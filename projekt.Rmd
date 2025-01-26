@@ -304,7 +304,7 @@ boxplot(pusaci$ap_hi,
 
 ```
 
-Najprije provjeravama jesu li podaci iz normalne razdiobe. Kako ne znamo koju konkretnu normalnu razdiobu očekujemo, koristimo Lillieforsovu inačicu Kolmogorov-Smirnovljevog testa. Posebno testiramo tlakove pušača i tlakove nepušača. Također radimo Q-Q plotove za vizualnu usporedbu kvantila s kvantilima normalne razdiobe.
+Najprije provjeravama jesu li podaci iz normalne razdiobe. Kako ne znamo koju konkretnu normalnu razdiobu očekujemo, koristimo Lillieforsovu inačicu Kolmogorov-Smirnovljevog testa uz nivo značajnosti 5%.  Posebno testiramo tlakove pušača i tlakove nepušača. Također radimo Q-Q plotove za vizualnu usporedbu kvantila razdiobe tlakova s kvantilima normalne razdiobe.
 
 ```{r}
 pusaci = filtered_data[filtered_data["smoke"]==1,]
@@ -319,7 +319,7 @@ qqnorm(nepusaci$ap_hi, main = "Q-Q plot za tlakove nepušača")
 qqline(nepusaci$ap_hi, col="red")
 ```
 
-Test odbacuje nul-hipotezu (da su podaci slučajan uzorak iz normalne razdiobe) za obje grupe na razini značajnosti od 1%. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu za vrijednosti oko prosjeka i manje, ali ima vrlo teški rep prema većim vrijednostima. To je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu.
+Test odbacuje nul-hipotezu za obje grupe. Na Q-Q plotovima vidimo da distribucija podataka relativno dobro prati normalnu za vrijednosti oko prosjeka i manje, ali ima vrlo teški gornji rep. To je u skladu s prisutnošću mnogo outliera vidljivih u tom području na box plotu.
 
 Treba provjeriti jesu li varijance grupa jednake. Provodimo F-test za jednakost varijanci sitoličkih tlakova nepušača i pušača. Dobivamo vrlo malu p-vrijednost, pa odbacujemo nul-hipotezu. Procijenjeni omjer varijanci je oko 0.9, dakle pušači imaju veću varijancu u sistoličkom tlaku nego nepušači. Poznato je da pušenje uzrokuje kratkotrajni porast krvnog tlaka. Moguće je tlakovi pušača više variraju jer su nekim pušačima tlakovi izmjereni ubrzo nakon pušenja, a nekima nakon nekoliko sati bez cigareta. U svakom slučaju, ne možemo pretpostaviti jednakost varijanci u daljnjim testovima.
 
