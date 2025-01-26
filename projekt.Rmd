@@ -25,7 +25,7 @@ library(patchwork)
 
 ```{r, include=FALSE}
 # Učitavanje podataka iz csv datoteke:
-healthDATA.modif = read_csv("Health Screening Data.csv")
+healthDATA.modif = read.csv("Health Screening Data.csv")
 healthDATA.modif$BMI <- as.double(healthDATA.modif$BMI)
 #View(healthDATA.modif)
 total = 0
@@ -40,13 +40,13 @@ weird / total
 ```
 ##Filtriranje podataka
 
-Početna faza analize uključila je čišćenje podataka korištenjem više kriterija. Eliminirane su sve observacije s nelogičnim vrijednostima tlaka (npr. negativne vrijednosti) te slučajevi gdje maksimalni tlak prelazi minimalni. Dodatno, izbačeni su ekstremni BMI-ovi iznad službeno registriranog svjetskog maksimuma kako bi se osigurala realnost podataka.
+Početna faza analize uključila je čišćenje podataka korištenjem više kriterija. Eliminirane su sve observacije s nelogičnim vrijednostima tlaka (npr. negativne vrijednosti) te slučajevi gdje maksimalni tlak prelazi minimalni. Dodatno, izbačeni su ekstremni BMI-ovi te restrigirani na raspone unutar NHS inform podataka. (Izvor: https://www.nhsinform.scot/healthy-living/food-and-nutrition/healthy-eating-and-weight-management/body-mass-index-bmi/)
 
 ```{r}
 # Filtriranje besmislenih podataka iz tablice
 filtered_data <- healthDATA.modif %>% filter(ap_hi <= 370) %>% 
   filter(ap_lo <= 360) %>% filter(ap_hi >= 40) %>% filter(ap_lo >= 0) %>% 
-  filter(ap_hi >= ap_lo) %>% filter(BMI <= 251.1) 
+  filter(ap_hi >= ap_lo) %>% filter(BMI <= 52.3) 
 
 filtered_data <- filtered_data %>%
   mutate(
@@ -89,18 +89,19 @@ average_height
 # Zadatak 1
 
 distribution <- filtered_data %>%
-  group_by(gender, cholesterol) %>%
-  summarise(count = n(),
-            percentage = n() / nrow(filtered_data) * 100)
+  group_by(AgeGroup, gender, cholesterol) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(AgeGroup, gender) %>%
+  mutate(percentage = count / sum(count) * 100)
 
 #distribution
 
-ggplot(filtered_data, aes(x = cholesterol, fill = gender)) +
-  geom_bar(position = "dodge") +
+ggplot(distribution, aes(x = cholesterol, y = percentage, fill = gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~ AgeGroup) +
   labs(title = "Distribucija kolesterola prema spolu i dobnoj skupini",
        x = "Kategorije kolesterola",
-       y = "Broj uzoraka") +
+       y = "Postotak unutar spola (%)") +
   theme_minimal() +
   scale_fill_manual(values = c("blue", "pink"))
 
@@ -614,7 +615,7 @@ print(kruskal_lo)
 Sada ćemo metodom najmanjih kvadrata pokušati uspostaviti vezu između BMI-a i krvnog tlaka.
 ```{r}
 
-fit.ap_hi <- lm(ap_hi ~ BMI , data = filtered_data)
+fit.ap_hi <- lm(ap_hi ~ poly(BMI,3) , data = filtered_data)
 
 plot(filtered_data$BMI, filtered_data$ap_hi, 
      main = "Odnos sistoličkog krvnog tlaka i BMI-a",
