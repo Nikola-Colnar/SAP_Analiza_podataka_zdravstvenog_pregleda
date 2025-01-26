@@ -6,7 +6,8 @@ output:
   pdf_document: default
   html_document:
     df_print: paged
-editor_options: 
+  word_document: default
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -782,7 +783,7 @@ print(lilliefors_test)
 ```
 
 Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
-```{r res}
+```{r}
 plot1 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_hi$residuals), aes(x = x, y = y)) +
   geom_point() +
   labs(title = "Graf reziduala (ap_hi)", x = "BMI", y = "Reziduali") +
@@ -853,38 +854,46 @@ print(lilliefors_test)
 Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
 
 ```{r}
-plot1 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_lo$residuals), aes(x = x, y = y)) +
+plot6 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_lo$residuals), 
+                aes(x = x, y = y)) +
   geom_point() +
   labs(title = "Graf reziduala (ap_lo)", x = "BMI", y = "Reziduali") +
   theme_minimal()
 
-plot2 <- ggplot(data.frame(x = fit.ap_lo$residuals), aes(x = x)) +
+plot7 <- ggplot(data.frame(x = fit.ap_lo$residuals), aes(x = x)) +
   geom_histogram(bins = 20, fill = "blue", color = "black") +
-  labs(title = "Histogram Reziduala (ap_lo)", x = "Reziduali", y = "Frekvencija") +
+  labs(title = "Histogram Reziduala (ap_lo)", x = "Reziduali",
+       y = "Frekvencija") +
   theme_minimal()
 
-plot3 <- ggplot(data.frame(x = rstandard(fit.ap_lo)), aes(x = x)) +
+plot8 <- ggplot(data.frame(x = rstandard(fit.ap_lo)), aes(x = x)) +
   geom_histogram(bins = 20, fill = "green", color = "black") +
-  labs(title = "Histogram standardiziranih reziduala (ap_lo)", x = "Standardizirani reziduali", y = "Frekvencija") +
+  labs(title = "Histogram standardiziranih reziduala (ap_lo)",
+       x = "Standardizirani reziduali", y = "Frekvencija") +
   theme_minimal()
 
-plot4 <- ggplot(data.frame(sample = rstandard(fit.ap_lo)), aes(sample = sample)) +
+plot9 <- ggplot(data.frame(sample = rstandard(fit.ap_lo)),
+                aes(sample = sample)) +
   stat_qq() +
   stat_qq_line(color = "red", lwd = 1.2) +
-  labs(title = "Q-Q plot standardiziranih reziduala (ap_lo)", x = "Teorijske kvantile", y = "Standardizirani reziduali") +
+  labs(title = "Q-Q plot standardiziranih reziduala (ap_lo)",
+       x = "Teorijske kvantile", y = "Standardizirani reziduali") +
   theme_minimal()
 
-plot5 <- ggplot(data.frame(x = fit.ap_lo$fitted.values, y = fit.ap_lo$residuals), aes(x = x, y = y)) +
+plot10 <- ggplot(data.frame(x = fit.ap_lo$fitted.values,
+                            y = fit.ap_lo$residuals), aes(x = x, y = y)) +
   geom_point(pch = 16) +
   geom_hline(yintercept = 0, color = "red", linetype = "filled", lwd = 1.2) +
-  labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_lo)", x = "Fitane vrijednosti", y = "Reziduali") +
+  labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_lo)",
+       x = "Fitane vrijednosti", y = "Reziduali") +
   theme_minimal()
 
-(plot1 + plot2) / (plot3 + plot5)
+(plot6 + plot7) / (plot8 + plot10)
 ```
 
+
 ```{r}
-plot4
+plot9
 ```
 
 Grafički možemo reći da reziduali imaju teže repove.
