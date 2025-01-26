@@ -7,10 +7,19 @@ Sljedeće što želimo provjeriti jest razlikuje li se prosječni krvni tlak zna
 
 
 ```{r}
+# Instalacija patchwork paketa (ako već nije instaliran)
+# Instalacija patchwork paketa (ako već nije instaliran)
+if (!require(patchwork)) {
+  install.packages("patchwork")
+}
 library(dplyr)
 library(ggplot2)
 library(car)
 library(nortest)
+library(patchwork)  # Dodano za slaganje grafova
+  # Dodano za slaganje grafova
+
+
 
 healthDATA.modif = read.csv("Health Screening Data.csv")
 
@@ -52,25 +61,42 @@ Za početak, kako bismo dobili dojam o utjecaju tjelesne aktivnosti, crtamo box 
 
 ```{r}
 
-# Pretpostavljamo da su podaci učitani u healthDATA.clean
-# Podjela podataka prema aktivnosti
-active_data <- healthDATA.clean %>% filter(active == 1)
-inactive_data <- healthDATA.clean %>% filter(active == 0)
-
-# 1) Boxplot za sistolički i dijastolički tlak prema aktivnosti
-ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_hi)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Distribucija sistoličkog tlaka prema aktivnosti", 
+# Kreiranje boxplota za ap_hi
+p1 <- ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_hi)) +
+  geom_boxplot(fill = "lightblue") +
+  theme_minimal(base_size = 12) +
+  labs(title = "Sistolički tlak prema aktivnosti \n",
        x = "Aktivnost", 
-       y = "Sistolički tlak")
+       y = "Sistolički tlak") +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10)
+  )
 
-ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_lo)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Distribucija dijastoličkog tlaka prema aktivnosti", 
+# Kreiranje boxplota za ap_lo
+p2 <- ggplot(healthDATA.clean, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_lo)) +
+  geom_boxplot(fill = "lightgreen") +
+  theme_minimal(base_size = 12) +
+  labs(title = "Dijastolički tlak prema aktivnosti \n",
        x = "Aktivnost", 
-       y = "Dijastolički tlak")
+       y = "Dijastolički tlak") +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10)
+  )
+
+# Grupiranje boxplota horizontalno sa razmakom i višerednim naslovom
+combined_boxplots <- p1 + p2 + 
+  plot_layout(ncol = 2, widths = c(1, 1), guides = "collect") + 
+  plot_annotation(title = "Boxplotovi krvnog tlaka \nprema aktivnosti") &
+  theme(plot.title = element_text(size = 14, hjust = 0.5))
+
+# Prikaz kombiniranih boxplotova
+print(combined_boxplots)
+
+
 
 
 ```
@@ -80,36 +106,89 @@ Iz plotova vidimo da su vrijednosti krvnih tlakova dosta slične kod aktivnih i 
 Za određivanje možemo li koristiti t-test, provjeravamo njegove pretpostavke. Prvo ćemo ispitati normalnost grupa na temelju histograma i Q-Q plota.
 
 ```{r}
-
-# 2) Histogram za sistolički i dijastolički tlak prema aktivnosti
-ggplot(healthDATA.clean, aes(x = ap_hi, fill = factor(active, labels = c("Inactive", "Active")))) +
-  geom_histogram(binwidth = 1, alpha = 0.6, position = "identity") +
-  theme_minimal() +
-  labs(title = "Histogram sistoličkog tlaka prema aktivnosti", 
+# Kreiranje histogramova za ap_hi
+hist_hi <- ggplot(healthDATA.clean, aes(x = ap_hi, fill = factor(active, labels = c("Inactive", "Active")))) +
+  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
+  theme_minimal(base_size = 10) +
+  labs(title = "Histogram sistoličkog tlaka \nprema aktivnosti", 
        x = "Sistolički tlak", 
-       fill = "Aktivnost")
+       fill = "Aktivnost") +
+  theme(
+    plot.title = element_text(size = 10, hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10),
+    legend.position = "bottom"
+  )
 
-ggplot(healthDATA.clean, aes(x = ap_lo, fill = factor(active, labels = c("Inactive", "Active")))) +
-  geom_histogram(binwidth = 1, alpha = 0.6, position = "identity") +
-  theme_minimal() +
-  labs(title = "Histogram dijastoličkog tlaka prema aktivnosti", 
+# Kreiranje histogramova za ap_lo
+hist_lo <- ggplot(healthDATA.clean, aes(x = ap_lo, fill = factor(active, labels = c("Inactive", "Active")))) +
+  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
+  theme_minimal(base_size = 10) +
+  labs(title = "Histogram dijastoličkog tlaka \nprema aktivnosti", 
        x = "Dijastolički tlak", 
-       fill = "Aktivnost")
+       fill = "Aktivnost") +
+  theme(
+    plot.title = element_text(size = 10, hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10),
+    legend.position = "bottom"
+  )
 
-# 5) Q-Q Plot za provjeru normalnosti
-ggplot(healthDATA.clean, aes(sample = ap_hi)) +
-  stat_qq() +
-  stat_qq_line() +
+# Kreiranje Q-Q plotova za ap_hi
+qq_hi <- ggplot(healthDATA.clean, aes(sample = ap_hi)) +
+  stat_qq(color = "darkblue") +
+  stat_qq_line(color = "red") +
   facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
-  theme_minimal() +
-  labs(title = "Q-Q plot za sistolički tlak prema aktivnosti")
+  theme_minimal(base_size = 10) +
+  labs(title = "Q-Q plot sistoličkog tlaka \nprema aktivnosti",
+       x = "Teorijske kvantile",
+       y = "Empirijske kvantile") +
+  theme(
+    plot.title = element_text(size = 10, hjust = 0.5),
+    strip.text = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10)
+  )
 
-ggplot(healthDATA.clean, aes(sample = ap_lo)) +
-  stat_qq() +
-  stat_qq_line() +
+# Kreiranje Q-Q plotova za ap_lo
+qq_lo <- ggplot(healthDATA.clean, aes(sample = ap_lo)) +
+  stat_qq(color = "darkgreen") +
+  stat_qq_line(color = "red") +
   facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
-  theme_minimal() +
-  labs(title = "Q-Q plot za dijastolički tlak prema aktivnosti")
+  theme_minimal(base_size = 10) +
+  labs(title = "Q-Q plot dijastoličkog tlaka \nprema aktivnosti",
+       x = "Teorijske kvantile",
+       y = "Empirijske kvantile") +
+  theme(
+    plot.title = element_text(size = 12, hjust = 0.5),
+    strip.text = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 10)
+  )
+
+# Grupiranje histogramova u jedan red sa višerednim naslovom
+combined_histograms <- hist_hi + hist_lo + 
+  plot_layout(ncol = 2, widths = c(1, 1)) + 
+  plot_annotation(title = "Histograme krvnog tlaka \nprema aktivnosti") &
+  theme(plot.title = element_text(size = 12, hjust = 0.5))
+
+# Grupiranje Q-Q plotova u jedan red sa višerednim naslovom
+combined_qqplots <- qq_hi + qq_lo + 
+  plot_layout(ncol = 2, widths = c(1, 1)) + 
+  plot_annotation(title = "Q-Q Plotovi krvnog tlaka \nprema aktivnosti") &
+  theme(plot.title = element_text(size = 12, hjust = 0.5))
+
+# Grupiranje svih histogramova i Q-Q plotova u jedan layout
+final_combined <- (combined_histograms / combined_qqplots) + 
+  plot_layout(ncol = 1, heights = c(1, 1)) &
+  theme(
+    plot.title = element_text(size = 12, hjust = 0.5),
+    plot.margin = margin(10,10,10,10)
+  )
+
+# Prikaz kombiniranih grafova
+print(final_combined)
+
 
 
 ```
@@ -184,89 +263,106 @@ Ipak, zanima nas i razlikuje li se značajno prosječni krvni tlak među skupina
 
 ```{r}
 
-
-# Boxplot za sistolički tlak (ap_hi) po BMI kategorijama
+# Kreiranje boxplota za ap_hi po BMICat
 p_hi <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_hi)) + 
   geom_boxplot(fill = "skyblue", alpha = 0.7, outlier.color = "red") +
-  # Crvena isprekidana linija je ukupna sredina (mean) ap_hi
   geom_hline(yintercept = mean(healthDATA.clean$ap_hi), 
              color = "red", linetype = "dashed", size = 1) +
-  labs(title = "Box plot sistoličkog tlaka po BMI kategorijama", 
+  labs(title = "Sistolički tlak po BMI kategorijama \n",
        x = "BMI kategorija", 
        y = "Sistolički tlak") +
-  theme_minimal()
+  scale_x_discrete(labels = c("Normal"       = "Normal",
+                              "Obese"        = "Obese",
+                              "Over Weight"  = "Over\nWeight",
+                              "Under Weight" = "Under\nWeight")) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
 
-# Boxplot za dijastolički tlak (ap_lo) po BMI kategorijama
+# Kreiranje boxplota za ap_lo po BMICat
 p_lo <- ggplot(healthDATA.clean, aes(x = BMICat, y = ap_lo)) + 
   geom_boxplot(fill = "orange", alpha = 0.7, outlier.color = "blue") +
-  # Crvena isprekidana linija je ukupna sredina (mean) ap_lo
   geom_hline(yintercept = mean(healthDATA.clean$ap_lo), 
              color = "red", linetype = "dashed", size = 1) +
-  labs(title = "Box plot dijastoličkog tlaka po BMI kategorijama", 
+  labs(title = "Dijastolički tlak po BMI kategorijama \n",
        x = "BMI kategorija", 
        y = "Dijastolički tlak") +
-  theme_minimal()
+  scale_x_discrete(labels = c("Normal"       = "Normal",
+                              "Obese"        = "Obese",
+                              "Over Weight"  = "Over\nWeight",
+                              "Under Weight" = "Under\nWeight")) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
 
-# Prikaz oba grafa
-print(p_hi)
-print(p_lo)
+combined_boxplots_bmi <- p_hi + p_lo + 
+  plot_layout(ncol = 2, widths = c(1, 1), guides = "collect") + 
+  plot_annotation(title = "Boxplotovi krvnog tlaka po BMI kategorijama \n") &
+  theme(plot.title = element_text(size = 14, hjust = 0.5))
 
+print(combined_boxplots_bmi)
 
 
 ```
 Prema box plotovima vidimo da je za očekivati kako se prosječni tlakovi značajno razlikuju među različitim skupinama, ali to moramo potvrditi odgovarajućim statističkim testovima. U ovom slučaju testiramo jednakost sredina četiri različite skupine, za što je potrebno koristiti ANOVA-u. Ipak, prije toga moramo provjeriti pretpostavke ANOVE. Prvo ćemo nacrtati histograme i Q-Q plotove kako bismo stekli dojam o normalnosti skupina. 
 
 ```{r}
-# Lista jedinstvenih BMI kategorija
-bmi_categories <- unique(healthDATA.clean$BMICat)
-
-# Kreiranje histograma i QQ plotova za svaku BMI kategoriju
 for (bmi_cat in bmi_categories) {
   
-  # Filtriranje podataka za trenutnu BMI kategoriju
   data_subset <- healthDATA.clean %>% filter(BMICat == bmi_cat)
   
-  # Histogram za sistolički tlak
-  p1 <- ggplot(data_subset, aes(x = ap_hi)) +
+  hist_hi <- ggplot(data_subset, aes(x = ap_hi)) +
     geom_histogram(binwidth = 2, fill = "blue", color = "black", alpha = 0.7) +
-    labs(title = paste("Distribucija sistoličkog tlaka -", bmi_cat),
+    labs(title = "Distribucija sistoličkog tlaka",
          x = "Sistolički tlak", y = "Frekvencija") +
-    theme_minimal()
-  
-  # Histogram za dijastolički tlak
-  p2 <- ggplot(data_subset, aes(x = ap_lo)) +
+    theme_minimal(base_size = 12)
+
+  hist_lo <- ggplot(data_subset, aes(x = ap_lo)) +
     geom_histogram(binwidth = 2, fill = "red", color = "black", alpha = 0.7) +
-    labs(title = paste("Distribucija dijastoličkog tlaka -", bmi_cat),
+    labs(title = "Distribucija dijastoličkog tlaka",
          x = "Dijastolički tlak", y = "Frekvencija") +
-    theme_minimal()
-  
-  # QQ plot za sistolički tlak
-  p3 <- ggplot(data_subset, aes(sample = ap_hi)) +
-    stat_qq(color = "blue") +
+    theme_minimal(base_size = 12)
+
+  qq_hi <- ggplot(data_subset, aes(sample = ap_hi)) +
+    stat_qq(color = "darkblue") +
     stat_qq_line(color = "red") +
-    labs(
-      title = paste("Q-Q plot - Sistolički tlak -", bmi_cat),
-      x = "Teorijske kvantile",
-      y = "Empirijske kvantile"
-    ) +
-    theme_minimal()
+    labs(title = "Q-Q plot - Sistolički tlak",
+         x = "Teorijske kvantile",
+         y = "Empirijske kvantile") +
+    theme_minimal(base_size = 12)
   
-  # QQ plot za dijastolički tlak
-  p4 <- ggplot(data_subset, aes(sample = ap_lo)) +
-    stat_qq(color = "blue") +
+  qq_lo <- ggplot(data_subset, aes(sample = ap_lo)) +
+    stat_qq(color = "darkgreen") +
     stat_qq_line(color = "red") +
-    labs(
-      title = paste("Q-Q plot - Dijastolički tlak -", bmi_cat),
-      x = "Teorijske kvantile",
-      y = "Empirijske kvantile"
-    ) +
-    theme_minimal()
-  
-  # Prikaz grafova
-  print(p1)
-  print(p2)
-  print(p3)
-  print(p4)
+    labs(title = "Q-Q plot - Dijastolički tlak",
+         x = "Teorijske kvantile",
+         y = "Empirijske kvantile") +
+    theme_minimal(base_size = 12)
+
+  hist_combined <- hist_hi + hist_lo + 
+    plot_layout(ncol = 2) + 
+    plot_annotation(title = paste("Histograme krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    theme(plot.title = element_text(hjust = 0.5))
+
+  qq_combined <- qq_hi + qq_lo + 
+    plot_layout(ncol = 2) + 
+    plot_annotation(title = paste("Q-Q Plotovi krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    theme(plot.title = element_text(hjust = 0.5))
+
+  combined_plots <- (hist_combined / qq_combined) + 
+    plot_layout(ncol = 1) +
+    plot_annotation(title = paste("Analiza krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    theme(plot.title = element_text(hjust = 0.5),
+          plot.margin = margin(10, 10, 10, 10))
+
+  print(combined_plots)
+  cat("\\newpage")
 }
 
 ```
