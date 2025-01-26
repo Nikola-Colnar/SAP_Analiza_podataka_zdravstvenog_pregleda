@@ -905,7 +905,7 @@ cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$AgeinYr))
 ```
 Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne. 
 
-### Višestruka regresija za krvni tlak
+### Višestruka regresija za sistolički i dijastolički krvni tlak
 
 ```{r}
 fit.multi_hi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
@@ -916,7 +916,7 @@ fit.multi_lo <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data) #ako maknete r
 #fit.multi = lm(ap_lo ~ AgeinYr + active, filtered_data)
 summary(fit.multi_lo)
 ```
-Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, ali smo odlučili zadržati ostale regresore zbog njihove interakcije u višestrukoj regresiji. Naime, za ovu kombinaciju regresora dobili smo najbolju vrijednost od $R_{adj}$.
+Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, ali smo odlučili zadržati ostale regresore zbog njihove interakcije u višestrukoj regresiji. Naime, za ovu kombinaciju regresora dobili smo najbolju vrijednost od $R_{adj}$. $R_{adj}$ kod dijastoličkog tlaka je manji nego kod sistoličkog tlaka i smatramo kako bi regresori za sistolički i dijastolički tlak trebali biti isti jer je riječ o usko vezanim fizikalnim veličinama.
 
 Nastavimo s analizom reziduala. Prvo testiramo normalnost:
 
@@ -980,21 +980,6 @@ Zaključak je da reziduali nisu distribuirani normalno.
 
 #### Zaključak
 Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati sistolički i dijastolički krvni tlak.
-
-### Višestruka regresija za dijastolički tlak
-Sada ponavljamo isti postupak za dijastolički tlak.
-
-```{r}
-
-```
-$R_{adj}$ je manji nego kod sistoličkog tlaka i smatramo kako bi regresori za sistolički i dijastolički tlak trebali biti isti jer je riječ o usko vezanim fizikalnim veličinama.
-
-U nastavku testiramo normalnost reziduala.
-```{r}
-#KS test na normalnost 
-
-
-```
 
 
 # Zaključak projekta
