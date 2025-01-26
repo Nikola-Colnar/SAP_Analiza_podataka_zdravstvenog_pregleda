@@ -19,6 +19,8 @@ library(nortest)
 library(car)
 library(patchwork)
 ```
+# Tema projekta
+U ovom projektu analiziramo medicinske podatke i pokušavamo uz pomoć statističkih testova odgovoriti na razna pitanja o krvnom tlaku i njegovoj ovisnosti o dobi, indeksu tjelesne mase, životnim navikama i drugim varijablama čije su vrijednosti dostupne u uzorku. Za provedbu analize korišten je programski jezik R.
 
 # Inicijalni koraci projekta
 ## Učitavanje podataka
@@ -131,9 +133,10 @@ ggplot(cholesterol_age, aes(x = cholesterol, y = percentage, fill = cholesterol)
   scale_fill_brewer(palette = "Set3")
 ```
 Zaključci sa grafa:
-  - U svakoj dobnoj skupini prevladava zdrava kategorija kolesterola.
-  - Dobna skupina 20-40 godina ima najzdravije razine kolesterola, s najmanjom zastupljenošću rizične i opasne kategorije.
-  - Skupina iznad 60 godina i dalje najčešće pripada zdravoj kategoriji, ali ima veću zastupljenost rizičnih i opasnih kategorija. Također, u ovoj skupini opasna kategorija nadmašuje rizičnu.
+
+* U svakoj dobnoj skupini prevladava zdrava kategorija kolesterola.
+* Dobna skupina 20-40 godina ima najzdravije razine kolesterola, s najmanjom zastupljenošću rizične i opasne kategorije.
+* Skupina iznad 60 godina i dalje najčešće pripada zdravoj kategoriji, ali ima veću zastupljenost rizičnih i opasnih kategorija. Također, u ovoj skupini opasna kategorija nadmašuje rizičnu.
   
 Sljedeći graf prikazuje distribuciju kolesterola prema spolovima.
 ```{r}
@@ -153,8 +156,9 @@ ggplot(cholesterol_gender, aes(x = cholesterol, y = percentage, fill = cholester
   scale_fill_brewer(palette = "Set3")
 ```
 Zaključci sa grafa:
-  - Zdrava kategorija dominira u svakom spolu.
-  - Razlike između spolova u distribuciji kategorija kolesterola nisu značajne.
+
+* Zdrava kategorija dominira u svakom spolu.
+* Razlike između spolova u distribuciji kategorija kolesterola nisu značajne.
 
 ## Prikaz dodatnih distribucija
 
@@ -188,14 +192,18 @@ ggplot(BMI_filtered_data, aes(x = BMI, color = gender, fill = gender)) +
   scale_color_manual(values = c("blue", "pink"))
 ```
 Zaključak
-  - BMI većinom pripada rasponu između 20 i 30, dok su vrijednosti iznad 30 rjeđe i opadaju prema 40.
+
+* BMI većinom pripada rasponu između 20 i 30, dok su vrijednosti iznad 30 rjeđe i opadaju prema 40.
 
 Distribucija sistoličkog i dijastoličkog krvnog tlaka također je analizirana prema dobnim skupinama i spolovima.
 
 ```{r}
-ap_filtered_data <- filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50)
+ap_filtered_data <- (filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130)
+                    %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50))
 
-ap_hi_distribution_g1 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+ap_hi_distribution_g1 <- ggplot(ap_filtered_data, aes(x = ap_hi, 
+                                                      color = AgeGroup, 
+                                                      fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
   labs(title = "Istaknuta distribucija\nsistoličkog krvnog\ntlaka prema dobnoj skupini",
        x = "Sistolički krvni tlak",
@@ -204,7 +212,9 @@ ap_hi_distribution_g1 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGrou
   scale_fill_brewer(palette = "Set2") +
   scale_color_brewer(palette = "Set2")
 
-ap_lo_distribution_g1 <-  ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+ap_lo_distribution_g1 <-  ggplot(ap_filtered_data, aes(x = ap_lo, 
+                                                       color = AgeGroup, 
+                                                       fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
   labs(title = "Istaknuta distribucija\ndijastoličkog krvnog tlaka\nprema dobnoj skupini",
        x = "Dijastolički krvni tlak",
@@ -240,7 +250,8 @@ ap_hi_distribution_g2 + ap_lo_distribution_g2
 ```
 
 Zaključak
-  - Krvni tlak pokazuje višemodalnu distribuciju, pri čemu je najčešća vrijednost 120/80 mmHg.
+
+* Krvni tlak pokazuje višemodalnu distribuciju, pri čemu je najčešća vrijednost 120/80 mmHg.
 
 Analizom distribucije krvnog tlaka primijetili smo da se podaci raspodjeljuju višemodalno, što intuitivno nije logično. Na primjer, zašto bi tlak od 80 bio učestaliji od tlaka 85, dok je tlak od 90 također učestaliji od 85? Objašnjenje leži u tendenciji liječnika da zaokružuju vrijednosti krvnog tlaka na brojeve koji završavaju nulom.
 
@@ -259,7 +270,8 @@ filtered_data <- filtered_data %>%
     ap_lo = ap_lo + runif(n(), min = -5 , max = 5)
   )
 
-ap_filtered_data <- filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50)
+ap_filtered_data <- (filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) 
+                     %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50))
 
 ap_hi_distribution_g3 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
@@ -296,10 +308,10 @@ nrow(pusaci)
 nrow(nepusaci)
 
 par(mfrow=c(1,2))
-bpd <- data.frame(sistolički=pusaci$ap_hi, dijastolički=pusaci$ap_lo)
+bpd <- data.frame(sistolicki=pusaci$ap_hi, dijastolicki=pusaci$ap_lo)
 boxplot(bpd, main='box-plot tlaka pušača',
         ylab='tlak/mmHg')
-bpd <- data.frame(sistolički=nepusaci$ap_hi, dijastolički=nepusaci$ap_lo)
+bpd <- data.frame(sistolicki=nepusaci$ap_hi, dijastolicki=nepusaci$ap_lo)
 boxplot(bpd, main='box-plot tlaka nepušača',
         ylab='tlak/mmHg')
 
@@ -316,13 +328,21 @@ lillie.test(nepusaci$ap_hi)
 lillie.test(pusaci$ap_lo)
 lillie.test(nepusaci$ap_lo)
 par(mfrow = c(2,2))
-qqnorm(pusaci$ap_hi, main = "sist. tlak pušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqnorm(pusaci$ap_hi, main = "sist. tlak pušača", 
+       xlab="kvantili normalne razdiobe", 
+       ylab="kvantili uzorka")
 qqline(pusaci$ap_hi, col="blue")
-qqnorm(nepusaci$ap_hi, main = "sist. tlak nepušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqnorm(nepusaci$ap_hi, main = "sist. tlak nepušača", 
+       xlab="kvantili normalne razdiobe", 
+       ylab="kvantili uzorka")
 qqline(nepusaci$ap_hi, col="red")
-qqnorm(pusaci$ap_lo, main = "dijast. tlak pušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqnorm(pusaci$ap_lo, main = "dijast. tlak pušača", 
+       xlab="kvantili normalne razdiobe", 
+       ylab="kvantili uzorka")
 qqline(pusaci$ap_lo, col="blue")
-qqnorm(nepusaci$ap_lo, main = "dijast. tlak nepušača", xlab="kvantili normalne razdiobe", ylab="kvantili uzorka")
+qqnorm(nepusaci$ap_lo, main = "dijast. tlak nepušača", 
+       xlab="kvantili normalne razdiobe", 
+       ylab="kvantili uzorka")
 qqline(nepusaci$ap_lo, col="red")
 ```
 
