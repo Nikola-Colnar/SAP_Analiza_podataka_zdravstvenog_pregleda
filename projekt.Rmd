@@ -469,12 +469,9 @@ final_combined <- (combined_histograms / combined_qqplots) +
 
 # Prikaz kombiniranih grafova
 print(final_combined)
-
-
-
 ```
 
-Iz plotova vidimo da distribucija najvjerojatnije nije normalna, ali za svaki slučaj ćemo za provjeru normalnosti i jednakosti varijanci provesti Kolmogorov-Smirnovljev test i F-test.
+Iz plotova vidimo da distribucija najvjerojatnije nije normalna, ali za svaki slučaj ćemo za provjeru normalnosti i jednakosti varijanci provesti Kolmogorov-Smirnovljev test i F-test.  Koristit ćemo uvijek razinu značajnosti od $5\%$ kao i prije.
 
 
 ```{r}
@@ -509,19 +506,19 @@ cat("\nF-test za ap_hi: p-value:", f_test_hi$p.value, "\n")
 cat("F-test za ap_lo: p-value:", f_test_lo$p.value, "\n")
 
 ```
-
-Iz rezultata vidimo da možemo odbaciti nultu hipotezu o normalnosti distribucija, dok iz F-testa vidimo da ne odbacujemo nultu hipotezu o jednakosti varijanci dviju distribucija. Unatoč nenormalnosti distribucija, provest ćemo t-test za usporedbu sredina budući da je robustan na nenormalnost uzorka. Ipak, provest ćemo i neparametarsku alternativu t-testu, Mann-Whitney-Wilcoxonov test.
+ 
+Iz rezultata vidimo da možemo odbaciti nultu hipotezu o normalnosti distribucija, dok iz F-testa vidimo da ne odbacujemo nultu hipotezu o jednakosti varijanci dviju distribucija. Unatoč nenormalnosti distribucija, provest ćemo t-test za usporedbu sredina budući da je robustan na nenormalnost uzorka. Ipak, provest ćemo i neparametarsku alternativu t-testu, Mann-Whitney-Wilcoxonov test. Za Man_Whitney-Wilcoxonov test pretpostavljamo da je krvni tlak distrubuiran jednako (do na translaciju) za aktivne i neaktivne ljude.
 
 ```{r}
 # Podjela podataka prema aktivnosti
 
 # 1) Standardni t-test
 cat("\n===== t-test za ap_hi =====\n")
-t_test_hi <- t.test(active_data$ap_hi, inactive_data$ap_hi, var.equal = FALSE)
+t_test_hi <- t.test(active_data$ap_hi, inactive_data$ap_hi, var.equal = TRUE)
 print(t_test_hi)
 
 cat("\n===== t-test za ap_lo =====\n")
-t_test_lo <- t.test(active_data$ap_lo, inactive_data$ap_lo, var.equal = FALSE)
+t_test_lo <- t.test(active_data$ap_lo, inactive_data$ap_lo, var.equal = TRUE)
 print(t_test_lo)
 
 # 2) Neparametrijski Mann-Whitney-Wilcoxon test
@@ -537,7 +534,7 @@ print(wilcox_lo)
 ```
 Nakon provedbe testova vidimo da ne možemo odbaciti nultu hipotezu prema kojoj su srednje vrijednosti tlakova aktivne i neaktivne grupe jednake. Stoga, ne možemo tvrditi da se prosječni krvni tlak značajno razlikuje među skupinama s različitom učestalošću tjelesne aktivnosti.
 
-Ipak, zanima nas i razlikuje li se značajno prosječni krvni tlak među skupinama s različitim BMI kategorijama. Za početak, kako bismo dobili dojam, crtamo box plotove koji nam daju početni uvid u podatke.
+Kao dodatno pitanje, zanima nas i razlikuje li se značajno prosječni krvni tlak među skupinama s različitim BMI kategorijama. Za početak, kako bismo dobili dojam, crtamo box plotove koji nam daju početni uvid u podatke.
 
 
 ```{r}
