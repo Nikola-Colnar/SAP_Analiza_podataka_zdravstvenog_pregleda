@@ -722,8 +722,8 @@ print(kruskal_lo)
 Nakon provedbe Kruskal-Wallisova testa vidimo da niske p-vrijednosti sugeriraju odbacivanje početne hipoteze o jednakosti sredina te prihvaćamo alternativu da se stvarne sredine razlikuju među različitim BMI skupinama.
 
 
-#Zadatak 4
-##Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a, dobi i učestalosti tjelesne aktivnosti?
+# Zadatak 4
+## Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a, dobi i učestalosti tjelesne aktivnosti?
 
 Želimo odgovoriti na sljedeće pitanje: "Kakav je odnos izmedu BMI-a i krvnog tlaka te možemo li predvidjeti krvni tlak na temelju BMI-a, dobi i učestalosti tjelesne aktivnosti?"
 
@@ -862,21 +862,50 @@ NAPOMENA: S obzirom da je tjelesna aktivnost binarna kategorijska varijabla nije
 ```{r}
 cor(cbind(filtered_data$active,filtered_data$BMI,filtered_data$AgeinYr))
 ```
-Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne. Veću zavisnost vidimo između BMI i starosti, što ima smisla jer kako starimo naša visina se toliko ne mijenja koliko naša masa, pa je normalno da će BMI ovisiti o starosti, no svakako možemo pretpostaviti nezavisnost i zbog toga što je najstarija osoba u uzorku ima $64$ godina, što nije dovoljno staro da krene značajno odumiranje mišićnog tkiva.
+Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne. 
 
+### Višestruka regresija za sistolički tlak
 
 ```{r}
 fit.multi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
 #fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
 summary(fit.multi)
 ```
-Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, no s trenutnim odabirom regresora dobivamo najbolju $R^2$ vrijednost tako da smo ih odlučili zadržati.
+Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, ali smo odlučili zadržati ostale regresore zbog njihove interakcije u višestrukoj regresiji. Naime, za ovu kombinaciju regresora dobili smo najbolju vrijednost od $R_{adj}$.
 
 Nastavimo s analizom reziduala. Prvo testiramo normalnost:
 
-```{r residuali - visestruka regresija}
-plot(fit.multi$fitted.values,fit.multi$residuals) 
+```{r}
+#KS test na normalnost 
+ks.test(rstandard(fit.ap_hi),'pnorm')
 
+require(nortest)
+lillie.test(rstandard(fit.ap_hi))
+```
+Iz KS i Lillieforsovog testa dobivamo da reziduali nisu normalno distribuirani. Pogledajmo kako se oni ponašaju grafički.
+
+```{r}
+selected.model = fit.multi
+plot(selected.model$fitted.values,selected.model$residuals, main="residuals", xlab="fitted.values")
+plot(filtered_data$BMI, selected.model$residuals, main="residuals", xlab="BMI")
+plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age")
+```
+
+
+#### Zaključak
+
+### Višestruka regresija za dijastolički tlak
+Sada ponavljamo isti postupak za dijastolički tlak.
+
+```{r}
+fit.multi <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
+#fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
+summary(fit.multi)
+```
+$R_{adj}$ je manji nego kod sistoličkog tlaka i smatramo kako bi regresori za sistolički i dijastolički tlak trebali biti isti jer je riječ o usko vezanim fizikalnim veličinama.
+
+U nastavku testiramo normalnost reziduala.
+```{r}
 #KS test na normalnost 
 ks.test(rstandard(fit.ap_hi),'pnorm')
 
@@ -884,32 +913,16 @@ require(nortest)
 lillie.test(rstandard(fit.ap_hi))
 
 ```
-
+Zaključak je da reziduali nisu distribuirani normalno. Možemo vidjeti njihov grafički prikaz u nastavku.
 ```{r}
 selected.model = fit.multi
-plot(selected.model$fitted.values,selected.model$residuals)
-plot(filtered_data$BMI, selected.model$residuals)
-plot(filtered_data$age, selected.model$residuals)
-```
-```{r}
-ks.test(rstandard(fit.multi),'pnorm')
-require(nortest)
-lillie.test(rstandard(fit.multi))
-```
-```{r}
-boxplot(ap_hi~active,data=filtered_data)
-
-boxplot(ap_lo~active,data=filtered_data)
-
-notA <- subset(filtered_data, active == 0)
-A <- subset(filtered_data, active == 1)
-mean(notA$ap_hi)
-mean(A$ap_hi)
-mean(notA$ap_lo)
-mean(A$ap_lo)
+plot(selected.model$fitted.values,selected.model$residuals, main="residuals", xlab="fitted.values")
+plot(filtered_data$BMI, selected.model$residuals, main="residuals", xlab="BMI")
+plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age")
 ```
 
-Iz grafova gore se ne čini kao da tjelesna aktivnost uopće utječe na krvni tlak.
+
+#### Zaključak
 
 # Zaključak projekta
 
