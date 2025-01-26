@@ -889,9 +889,13 @@ Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne.
 ### Višestruka regresija za sistolički tlak
 
 ```{r}
-fit.multi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
+fit.multi_hi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
 #fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
-summary(fit.multi)
+summary(fit.multi_hi)
+
+fit.multi_lo <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
+#fit.multi = lm(ap_lo ~ AgeinYr + active, filtered_data)
+summary(fit.multi_lo)
 ```
 Vidimo da je jedini značajan regresor mjera tjelesne aktivnosti, ali smo odlučili zadržati ostale regresore zbog njihove interakcije u višestrukoj regresiji. Naime, za ovu kombinaciju regresora dobili smo najbolju vrijednost od $R_{adj}$.
 
@@ -899,18 +903,59 @@ Nastavimo s analizom reziduala. Prvo testiramo normalnost:
 
 ```{r}
 #KS test na normalnost 
+print("Testovi za sistolički tlak")
+
 ks.test(rstandard(fit.ap_hi),'pnorm')
 
-require(nortest)
 lillie.test(rstandard(fit.ap_hi))
+
+print("Testovi za dijastolički tlak")
+
+ks.test(rstandard(fit.ap_lo),'pnorm')
+
+lillie.test(rstandard(fit.ap_lo))
 ```
 Iz KS i Lillieforsovog testa dobivamo da reziduali nisu normalno distribuirani. Pogledajmo kako se oni ponašaju grafički.
 
 ```{r}
-selected.model = fit.multi
-plot(selected.model$fitted.values,selected.model$residuals, main="residuals", xlab="fitted.values")
-plot(filtered_data$BMI, selected.model$residuals, main="residuals", xlab="BMI")
-plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age")
+selected.model = fit.multi_hi
+selected.model_ap_lo = fit.multi_lo
+
+plot1 <- ggplot(data.frame(x = selected.model$fitted.values, y = selected.model$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_hi residuals", x = "fitted.values", y = "residuals")
+
+plot2 <- ggplot(data.frame(x = filtered_data$BMI, y = selected.model$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_hi residuals", x = "BMI", y = "residuals")
+
+plot3 <- ggplot(data.frame(x = filtered_data$age, y = selected.model$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_hi residuals", x = "age", y = "residuals")
+
+plot4 <- ggplot(data.frame(x = selected.model_ap_lo$fitted.values, y = selected.model_ap_lo$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_lo residuals", x = "fitted.values", y = "residuals")
+
+plot5 <- ggplot(data.frame(x = filtered_data$BMI, y = selected.model_ap_lo$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_lo residuals", x = "BMI", y = "residuals")
+
+plot6 <- ggplot(data.frame(x = filtered_data$age, y = selected.model_ap_lo$residuals), aes(x, y)) +
+  geom_point() +
+  labs(title = "ap_lo residuals", x = "age", y = "residuals")
+```
+
+```{r}
+(plot1 + plot4)
+```
+
+```{r}
+ (plot2 + plot5)
+```
+
+```{r}
+ (plot3 + plot6)
 ```
 
 
@@ -920,27 +965,19 @@ Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo m
 Sada ponavljamo isti postupak za dijastolički tlak.
 
 ```{r}
-fit.multi <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
-#fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
-summary(fit.multi)
+
 ```
 $R_{adj}$ je manji nego kod sistoličkog tlaka i smatramo kako bi regresori za sistolički i dijastolički tlak trebali biti isti jer je riječ o usko vezanim fizikalnim veličinama.
 
 U nastavku testiramo normalnost reziduala.
 ```{r}
 #KS test na normalnost 
-ks.test(rstandard(fit.ap_hi),'pnorm')
 
-require(nortest)
-lillie.test(rstandard(fit.ap_hi))
 
 ```
 Zaključak je da reziduali nisu distribuirani normalno. Možemo vidjeti njihov grafički prikaz u nastavku.
 ```{r}
-selected.model = fit.multi
-plot(selected.model$fitted.values,selected.model$residuals, main="residuals", xlab="fitted.values")
-plot(filtered_data$BMI, selected.model$residuals, main="residuals", xlab="BMI")
-plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age")
+
 ```
 
 
