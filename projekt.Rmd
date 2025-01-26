@@ -25,6 +25,7 @@ library(car)
 ```{r, include=FALSE}
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read_csv("Health Screening Data.csv")
+healthDATA.modif$BMI <- as.numeric(healthDATA.modif$BMI)
 #View(healthDATA.modif)
 total = 0
 weird = 0
