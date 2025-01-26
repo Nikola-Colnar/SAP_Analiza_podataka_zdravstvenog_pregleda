@@ -741,7 +741,7 @@ lines(filtered_data$BMI[sorted_index],
 summary(fit.ap_hi)
 ```
 Iznad možemo vidjeti graf raspršenja između sistoličkog tlaka i BMI-a kao i pravac linearne regresije koji smo izračunali iz podataka. Pokušavali smo linearnu regresiju s polinomima viših stupnjeva, ali su svi stupnjevi bili veoma slični pravcima i nisu poboljšavali vrijednost $R^2$. Zbog toga smo dali prednost najjednostavnijem modelu, a to je naravno pravac. 
-Vidimo blagi pozitivan trend, ali se iz p vrijednosti vidi da je značajnost regresora skoro pa zanemariva. Također, $R^2$ vrijednost je 0.0564 ($R^2_{adj}$ je  0.05638) što ukazuje na loš fit modela, no mi ćemo svakako sada nastaviti s analizom reziduala.
+Vidimo blagi pozitivan trend, ali se iz p vrijednosti vidi da je značajnost regresora skoro pa zanemariva. Također, $R^2$ vrijednost je 0.07064 ($R^2_{adj}$ je  0.07062) što ukazuje na loš fit modela, no mi ćemo svakako sada nastaviti s analizom reziduala.
 
 ```{r}
 standardized_residuals <- rstandard(fit.ap_hi)
@@ -780,7 +780,7 @@ abline(h = 0, col = "red", lwd = 2)
 
 ```
 
-Q-Q plot nam govori da ova razdioba ima lakše repove od normalne, ali ovo svakako nije normalna distribucija.
+Q-Q plot nam govori da ova razdioba ima teže repove od normalne, ali ovo svakako nije normalna distribucija.
 Sada možemo zaključiti da je nemoguće predvidjeti sistolički krvni tlak iz BMI-a (iz ovih podataka).
 
 
@@ -801,7 +801,7 @@ lines(filtered_data$BMI[sorted_index],
 summary(fit.ap_lo)
 ```
 
-Zadržat ćemo model pravca iz istog razloga kao i za sistolički tlak. Vidi se blagi pozitivan trend, ali vidimo (iz p vrijednosti) da regresor ima jako malenu značajnost. Također, $R^2$ vrijednost je sada 0.04008 ($R^2_{adj}$ je  0.04007) što opet ukazuje na loš fit modela, no mi ćemo svakako opet nastaviti s analizom reziduala.
+Zadržat ćemo model pravca iz istog razloga kao i za sistolički tlak. Vidi se blagi pozitivan trend, ali vidimo (iz p vrijednosti) da regresor ima jako malenu značajnost. Također, $R^2$ vrijednost je sada 0.05161 ($R^2_{adj}$ je  0.0516) što opet ukazuje na loš fit modela, no mi ćemo svakako opet nastaviti s analizom reziduala.
 Analiza reziduala
 ```{r}
 standardized_residuals <- rstandard(fit.ap_hi)
@@ -840,7 +840,7 @@ plot(fit.ap_lo$fitted.values, fit.ap_lo$residuals,
 abline(h = 0, col = "red", lwd = 2)
 
 ```
-Grafički možemo reći da reziduali imaju teže repove, ali se ne ponašaju baš pravino.
+Grafički možemo reći da reziduali imaju teže repove.
 Nemoguće je (na temelju ovih podataka) predvidjeti dijastolički krvni tlak iz BMI-a.
 
 
