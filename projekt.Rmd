@@ -482,6 +482,7 @@ active_data <- filtered_data %>% filter(active == 1)
 inactive_data <- filtered_data %>% filter(active == 0)
 
 # 3) Kolmogorov-Smirnov test za normalnost
+
 cat("\n===== Kolmogorov-Smirnov test za normalnost =====\n")
 
 ks_hi_active <- ks.test(active_data$ap_hi, "pnorm", mean = mean(active_data$ap_hi), sd = sd(active_data$ap_hi))
@@ -650,6 +651,7 @@ for (bmi_cat in bmi_categories) {
 Nakon crtanja histograma i Q-Q plotova dobivamo dojam da skupine ne ispunjavaju uvjet normalnosti, ali svejedno ćemo provesti Kolmogorov-Smirnovljev test kako bismo tu tvrdnju dodatno provjerili. Također, provest ćemo i Bartlettov test za provjeru homoskedastičnosti, koja je još bitnija pretpostavka ANOVE.
 
 ```{r}
+# 1) Test normalnosti po grupama (Kolmogorov-Smirnov)
 
 for (bmi_cat in bmi_categories) {
   
