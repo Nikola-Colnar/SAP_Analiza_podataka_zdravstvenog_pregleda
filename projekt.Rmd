@@ -478,6 +478,9 @@ Iz plotova vidimo da distribucija najvjerojatnije nije normalna, ali za svaki sl
 
 
 ```{r}
+active_data <- filtered_data %>% filter(active == 1)
+inactive_data <- filtered_data %>% filter(active == 0)
+
 # 3) Kolmogorov-Smirnov test za normalnost
 cat("\n===== Kolmogorov-Smirnov test za normalnost =====\n")
 
@@ -510,8 +513,6 @@ Iz rezultata vidimo da možemo odbaciti nultu hipotezu o normalnosti distribucij
 
 ```{r}
 # Podjela podataka prema aktivnosti
-active_data <- filtered_data %>% filter(active == 1)
-inactive_data <- filtered_data %>% filter(active == 0)
 
 # 1) Standardni t-test
 cat("\n===== t-test za ap_hi =====\n")
@@ -590,6 +591,9 @@ print(combined_boxplots_bmi)
 Prema box plotovima vidimo da je za očekivati kako se prosječni tlakovi značajno razlikuju među različitim skupinama, ali to moramo potvrditi odgovarajućim statističkim testovima. U ovom slučaju testiramo jednakost sredina četiri različite skupine, za što je potrebno koristiti ANOVA-u. Ipak, prije toga moramo provjeriti pretpostavke ANOVE. Prvo ćemo nacrtati histograme i Q-Q plotove kako bismo stekli dojam o normalnosti skupina. 
 
 ```{r}
+# 1) Test normalnosti po grupama (Kolmogorov-Smirnov)
+bmi_categories <- unique(filtered_data$BMICat)
+
 for (bmi_cat in bmi_categories) {
   
   data_subset <- filtered_data %>% filter(BMICat == bmi_cat)
@@ -646,8 +650,6 @@ for (bmi_cat in bmi_categories) {
 Nakon crtanja histograma i Q-Q plotova dobivamo dojam da skupine ne ispunjavaju uvjet normalnosti, ali svejedno ćemo provesti Kolmogorov-Smirnovljev test kako bismo tu tvrdnju dodatno provjerili. Također, provest ćemo i Bartlettov test za provjeru homoskedastičnosti, koja je još bitnija pretpostavka ANOVE.
 
 ```{r}
-# 1) Test normalnosti po grupama (Kolmogorov-Smirnov)
-bmi_categories <- unique(filtered_data$BMICat)
 
 for (bmi_cat in bmi_categories) {
   
