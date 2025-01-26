@@ -125,7 +125,8 @@ cholesterol_age <- filtered_data %>%
   group_by(AgeGroup) %>%
   mutate(percentage = count / sum(count) * 100)
 
-ggplot(cholesterol_age, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+ggplot(cholesterol_age, aes(x = cholesterol, 
+                            y = percentage, fill = cholesterol)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~ AgeGroup) +
   labs(title = "Postotak kolesterola unutar dobnih skupina",
@@ -148,7 +149,8 @@ cholesterol_gender <- filtered_data %>%
   group_by(gender) %>%
   mutate(percentage = count / sum(count) * 100)
 
-ggplot(cholesterol_gender, aes(x = cholesterol, y = percentage, fill = cholesterol)) +
+ggplot(cholesterol_gender, aes(x = cholesterol, 
+                               y = percentage, fill = cholesterol)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~ gender) +
   labs(title = "Postotak kolesterola unutar spolova",
@@ -200,14 +202,16 @@ Zaključak
 Distribucija sistoličkog i dijastoličkog krvnog tlaka također je analizirana prema dobnim skupinama i spolovima.
 
 ```{r}
-ap_filtered_data <- (filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130)
+ap_filtered_data <- (filtered_data %>% 
+                    filter(ap_hi <= 190) %>% filter(ap_lo <= 130)
                     %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50))
 
 ap_hi_distribution_g1 <- ggplot(ap_filtered_data, aes(x = ap_hi, 
                                                       color = AgeGroup, 
                                                       fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Istaknuta distribucija\nsistoličkog krvnog\ntlaka prema dobnoj skupini",
+  labs(title 
+    = "Istaknuta distribucija\nsistoličkog krvnog\ntlaka prema dobnoj skupini",
        x = "Sistolički krvni tlak",
        y = "Gustoća") +
   theme_minimal() +
@@ -218,7 +222,8 @@ ap_lo_distribution_g1 <-  ggplot(ap_filtered_data, aes(x = ap_lo,
                                                        color = AgeGroup, 
                                                        fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Istaknuta distribucija\ndijastoličkog krvnog tlaka\nprema dobnoj skupini",
+  labs(title 
+  = "Istaknuta distribucija\ndijastoličkog krvnog tlaka\nprema dobnoj skupini",
        x = "Dijastolički krvni tlak",
        y = "Gustoća") +
   theme_minimal() +
@@ -230,7 +235,8 @@ ap_hi_distribution_g1 + ap_lo_distribution_g1
 
 Prema spolu:
 ```{r}
-ap_hi_distribution_g2 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = gender, fill = gender)) +
+ap_hi_distribution_g2 <- ggplot(ap_filtered_data, aes(x = ap_hi, 
+                                              color = gender, fill = gender)) +
   geom_density(alpha = 0.5) +
   labs(title = "Istaknuta distribucija\nsistoličkog krvnog tlaka prema spolu",
        x = "Sistolički krvni tlak",
@@ -239,9 +245,11 @@ ap_hi_distribution_g2 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = gender,
   scale_fill_manual(values = c("blue", "pink")) +
   scale_color_manual(values = c("blue", "pink"))
 
-ap_lo_distribution_g2 <- ggplot(ap_filtered_data, aes(x = ap_lo, color = gender, fill = gender)) +
+ap_lo_distribution_g2 <- ggplot(ap_filtered_data, aes(x = ap_lo,
+                                              color = gender, fill = gender)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Istaknuta distribucija\ndijastoličkog krvnog tlaka prema spolu",
+  labs(title 
+       = "Istaknuta distribucija\ndijastoličkog krvnog tlaka prema spolu",
        x = "Dijastolički krvni tlak",
        y = "Gustoća") +
   theme_minimal() +
@@ -272,21 +280,28 @@ filtered_data <- filtered_data %>%
     ap_lo = ap_lo + runif(n(), min = -5 , max = 5)
   )
 
-ap_filtered_data <- (filtered_data %>% filter(ap_hi <= 190) %>% filter(ap_lo <= 130) 
+ap_filtered_data <- (filtered_data %>% filter(ap_hi <= 190) 
+                     %>% filter(ap_lo <= 130) 
                      %>% filter(ap_hi >= 80) %>% filter(ap_lo >= 50))
 
-ap_hi_distribution_g3 <- ggplot(ap_filtered_data, aes(x = ap_hi, color = AgeGroup, fill = AgeGroup)) +
+ap_hi_distribution_g3 <- ggplot(ap_filtered_data, 
+                                aes(x = ap_hi, color = AgeGroup, 
+                                fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Distribucija sistoličkog\nkrvnog tlaka sa dodanim šumom\nprema dobnoj skupini",
+  labs(title = paste("Distribucija sistoličkog\nkrvnog", 
+            "tlaka sa dodanim šumom\nprema dobnoj skupini", sep = " "), 
        x = "Sistolički krvni tlak",
        y = "Gustoća") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set2") +
   scale_color_brewer(palette = "Set2")
 
-ap_lo_distribution_g3 <- ggplot(ap_filtered_data, aes(x = ap_lo, color = AgeGroup, fill = AgeGroup)) +
+ap_lo_distribution_g3 <- ggplot(ap_filtered_data, 
+                                aes(x = ap_lo, color = AgeGroup, 
+                                fill = AgeGroup)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Distribucija dijastoličkog\nkrvnog tlaka sa dodanim šumom\nprema dobnoj skupini",
+  labs(title = paste("Distribucija dijastoličkog\nkrvnog", 
+              "tlaka sa dodanim šumom\nprema dobnoj skupini", sep=" "),
        x = "Dijastolički krvni tlak",
        y = "Gustoća") +
   theme_minimal() +
@@ -360,8 +375,10 @@ var.test(nepusaci$ap_lo, pusaci$ap_lo)
 Testiramo hipotezu o jednakosti prosječnih krvnih tlakova pušača i nepušača koristeći dvostrani t-test za neuparene podatke uz nepoznate i nejednake varijance na razini značajnosti od 5%. Test neće biti egzaktan jer nije zadovoljena pretpostavka o normalnosti. Ipak, možemo ga koristiti zbog dovoljne veličine uzorka i robusnosti testa na odstupanje podataka od normalne distribucije. Ne uzimamo pretpostavku da su varijance jednake zbog rezultata F testa.
 
 ```{r}
-t.test(pusaci$ap_hi, nepusaci$ap_hi, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
-t.test(pusaci$ap_lo, nepusaci$ap_lo, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+t.test(pusaci$ap_hi, nepusaci$ap_hi, alternative = "two.sided", mu = 0, 
+       paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+t.test(pusaci$ap_lo, nepusaci$ap_lo, alternative = "two.sided", mu = 0, 
+       paired = FALSE, var.equal = FALSE, conf.level = 0.95)
 ```
 Dobivene P vrijednosti su vrlo male pa možemo odbaciti hipotezu o jednakosti srednjih vrijednosti tlakova na razini značajnosti od 5% i za sistoličke i za dijastoličke. Test pokazuje statistički značajne razlike, no procijenjene razlika sredina su male u odnosu na 30 mmHg koliko otprilike iznosi raspon tlakova koji se smatraju normalnim pa je značaj tih razlika u praksi upitan.
 
@@ -374,7 +391,10 @@ Za početak, kako bismo dobili dojam o utjecaju tjelesne aktivnosti, crtamo box 
 ```{r}
 
 # Kreiranje boxplota za ap_hi
-p1 <- ggplot(filtered_data, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_hi)) +
+p1 <- ggplot(filtered_data, 
+             aes(x = factor(active, 
+                            labels = c("Inactive", 
+                            "Active")), y = ap_hi)) +
   geom_boxplot(fill = "lightblue") +
   theme_minimal(base_size = 12) +
   labs(title = "Sistolički tlak prema aktivnosti \n",
@@ -387,7 +407,10 @@ p1 <- ggplot(filtered_data, aes(x = factor(active, labels = c("Inactive", "Activ
   )
 
 # Kreiranje boxplota za ap_lo
-p2 <- ggplot(filtered_data, aes(x = factor(active, labels = c("Inactive", "Active")), y = ap_lo)) +
+p2 <- ggplot(filtered_data, 
+             aes(x = factor(active, 
+                            labels = c("Inactive", 
+                            "Active")), y = ap_lo)) +
   geom_boxplot(fill = "lightgreen") +
   theme_minimal(base_size = 12) +
   labs(title = "Dijastolički tlak prema aktivnosti \n",
@@ -419,8 +442,11 @@ Za određivanje možemo li koristiti t-test, provjeravamo njegove pretpostavke. 
 
 ```{r}
 # Kreiranje histogramova za ap_hi
-hist_hi <- ggplot(filtered_data, aes(x = ap_hi, fill = factor(active, labels = c("Inactive", "Active")))) +
-  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
+hist_hi <- ggplot(filtered_data, aes(x = ap_hi, 
+                                    fill = factor(active, 
+                                    labels = c("Inactive", "Active")))) +
+  geom_histogram(binwidth = 2, alpha = 0.6,
+                 position = "identity", color = "black") +
   theme_minimal(base_size = 10) +
   labs(title = "Histogram sistoličkog tlaka \nprema aktivnosti", 
        x = "Sistolički tlak", 
@@ -433,8 +459,11 @@ hist_hi <- ggplot(filtered_data, aes(x = ap_hi, fill = factor(active, labels = c
   )
 
 # Kreiranje histogramova za ap_lo
-hist_lo <- ggplot(filtered_data, aes(x = ap_lo, fill = factor(active, labels = c("Inactive", "Active")))) +
-  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity", color = "black") +
+hist_lo <- ggplot(filtered_data, aes(x = ap_lo,
+                                     fill = factor(active, 
+                                     labels = c("Inactive", "Active")))) +
+  geom_histogram(binwidth = 2, alpha = 0.6, 
+                 position = "identity", color = "black") +
   theme_minimal(base_size = 10) +
   labs(title = "Histogram dijastoličkog tlaka \nprema aktivnosti", 
        x = "Dijastolički tlak", 
@@ -450,7 +479,8 @@ hist_lo <- ggplot(filtered_data, aes(x = ap_lo, fill = factor(active, labels = c
 qq_hi <- ggplot(filtered_data, aes(sample = ap_hi)) +
   stat_qq(color = "darkblue") +
   stat_qq_line(color = "red") +
-  facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
+  facet_wrap(~ active, labeller = 
+               as_labeller(c("0" = "Inactive", "1" = "Active"))) +
   theme_minimal(base_size = 10) +
   labs(title = "Q-Q plot sistoličkog tlaka \nprema aktivnosti",
        x = "Teorijske kvantile",
@@ -466,7 +496,8 @@ qq_hi <- ggplot(filtered_data, aes(sample = ap_hi)) +
 qq_lo <- ggplot(filtered_data, aes(sample = ap_lo)) +
   stat_qq(color = "darkgreen") +
   stat_qq_line(color = "red") +
-  facet_wrap(~ active, labeller = as_labeller(c("0" = "Inactive", "1" = "Active"))) +
+  facet_wrap(~ active, labeller =
+               as_labeller(c("0" = "Inactive","1" = "Active"))) +
   theme_minimal(base_size = 10) +
   labs(title = "Q-Q plot dijastoličkog tlaka \nprema aktivnosti",
        x = "Teorijske kvantile",
@@ -513,16 +544,28 @@ inactive_data <- filtered_data %>% filter(active == 0)
 
 cat("\n===== Kolmogorov-Smirnov test za normalnost =====\n")
 
-ks_hi_active <- ks.test(active_data$ap_hi, "pnorm", mean = mean(active_data$ap_hi), sd = sd(active_data$ap_hi))
-ks_lo_active <- ks.test(active_data$ap_lo, "pnorm", mean = mean(active_data$ap_lo), sd = sd(active_data$ap_lo))
+ks_hi_active <- ks.test(active_data$ap_hi, "pnorm",
+                        mean = mean(active_data$ap_hi),
+                        sd = sd(active_data$ap_hi))
+ks_lo_active <- ks.test(active_data$ap_lo, "pnorm",
+                        mean = mean(active_data$ap_lo),
+                        sd = sd(active_data$ap_lo))
 
-ks_hi_inactive <- ks.test(inactive_data$ap_hi, "pnorm", mean = mean(inactive_data$ap_hi), sd = sd(inactive_data$ap_hi))
-ks_lo_inactive <- ks.test(inactive_data$ap_lo, "pnorm", mean = mean(inactive_data$ap_lo), sd = sd(inactive_data$ap_lo))
+ks_hi_inactive <- ks.test(inactive_data$ap_hi, "pnorm",
+                          mean = mean(inactive_data$ap_hi),
+                          sd = sd(inactive_data$ap_hi))
+ks_lo_inactive <- ks.test(inactive_data$ap_lo, "pnorm",
+                          mean = mean(inactive_data$ap_lo),
+                          sd = sd(inactive_data$ap_lo))
 
-cat("\nKolmogorov-Smirnov test za ap_hi (Active): p-value:", ks_hi_active$p.value, "\n")
-cat("Kolmogorov-Smirnov test za ap_lo (Active): p-value:", ks_lo_active$p.value, "\n")
-cat("\nKolmogorov-Smirnov test za ap_hi (Inactive): p-value:", ks_hi_inactive$p.value, "\n")
-cat("Kolmogorov-Smirnov test za ap_lo (Inactive): p-value:", ks_lo_inactive$p.value, "\n")
+cat("\nKolmogorov-Smirnov test za ap_hi (Active): p-value:",
+    ks_hi_active$p.value, "\n")
+cat("Kolmogorov-Smirnov test za ap_lo (Active): p-value:",
+    ks_lo_active$p.value, "\n")
+cat("\nKolmogorov-Smirnov test za ap_hi (Inactive): p-value:",
+    ks_hi_inactive$p.value, "\n")
+cat("Kolmogorov-Smirnov test za ap_lo (Inactive): p-value:",
+    ks_lo_inactive$p.value, "\n")
 
 # 4) F-test za homogenost varijance
 cat("\n===== F-test za varijance =====\n")
@@ -657,17 +700,20 @@ for (bmi_cat in bmi_categories) {
 
   hist_combined <- hist_hi + hist_lo + 
     plot_layout(ncol = 2) + 
-    plot_annotation(title = paste("Histograme krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    plot_annotation(title = paste("Histograme krvnog tlaka - BMI Kategorija:",
+                                  bmi_cat)) &
     theme(plot.title = element_text(hjust = 0.5))
 
   qq_combined <- qq_hi + qq_lo + 
     plot_layout(ncol = 2) + 
-    plot_annotation(title = paste("Q-Q Plotovi krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    plot_annotation(title = paste("Q-Q Plotovi krvnog tlaka - BMI Kategorija:",
+                                  bmi_cat)) &
     theme(plot.title = element_text(hjust = 0.5))
 
   combined_plots <- (hist_combined / qq_combined) + 
     plot_layout(ncol = 1) +
-    plot_annotation(title = paste("Analiza krvnog tlaka - BMI Kategorija:", bmi_cat)) &
+    plot_annotation(title = paste("Analiza krvnog tlaka - BMI Kategorija:",
+                                  bmi_cat)) &
     theme(plot.title = element_text(hjust = 0.5),
           plot.margin = margin(10, 10, 10, 10))
 
@@ -786,31 +832,38 @@ print(lilliefors_test)
 Reziduali padaju na testu normalnosti (i KS i Lilliefors). Možemo također vidjeti kako se reziduali ponašaju grafički:
 ```{r}
 
-plot1 <- ggplot(data.frame(x = filtered_data$BMI, y = fit.ap_hi$residuals), aes(x = x, y = y)) +
+plot1 <- ggplot(data.frame(x = filtered_data$BMI, 
+                           y = fit.ap_hi$residuals), aes(x = x, y = y)) +
   geom_point() +
   labs(title = "Graf reziduala (ap_hi)", x = "BMI", y = "Reziduali") +
   theme_minimal()
 
 plot2 <- ggplot(data.frame(x = fit.ap_hi$residuals), aes(x = x)) +
   geom_histogram(bins = 20, fill = "blue", color = "black") +
-  labs(title = "Histogram Reziduala (ap_hi)", x = "Reziduali", y = "Frekvencija") +
+  labs(title = "Histogram Reziduala (ap_hi)",
+       x = "Reziduali", y = "Frekvencija") +
   theme_minimal()
 
 plot3 <- ggplot(data.frame(x = rstandard(fit.ap_hi)), aes(x = x)) +
   geom_histogram(bins = 20, fill = "green", color = "black") +
-  labs(title = "Standardizirani reziduali (ap_hi)", x = "Standardizirani reziduali", y = "Frekvencija") +
+  labs(title = "Standardizirani reziduali (ap_hi)",
+       x = "Standardizirani reziduali", y = "Frekvencija") +
   theme_minimal()
 
-plot4 <- ggplot(data.frame(sample = rstandard(fit.ap_hi)), aes(sample = sample)) +
+plot4 <- ggplot(data.frame(sample = rstandard(fit.ap_hi)),
+                aes(sample = sample)) +
   stat_qq() +
   stat_qq_line(color = "red", lwd = 1.2) +
-  labs(title = "Q-Q plot standardiziranih reziduala (ap_hi)", x = "Teorijske kvantile", y = "Standardizirani reziduali") +
+  labs(title = "Q-Q plot standardiziranih reziduala (ap_hi)", 
+       x = "Teorijske kvantile", y = "Standardizirani reziduali") +
   theme_minimal()
 
-plot5 <- ggplot(data.frame(x = fit.ap_hi$fitted.values, y = fit.ap_hi$residuals), aes(x = x, y = y)) +
+plot5 <- ggplot(data.frame(x = fit.ap_hi$fitted.values,
+                           y = fit.ap_hi$residuals), aes(x = x, y = y)) +
   geom_point(pch = 16) +
   geom_hline(yintercept = 0, color = "red", linetype = "solid", lwd = 1.2) +
-  labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_hi)", x = "Fitane vrijednosti", y = "Reziduali") +
+  labs(title = "Reziduali u odnosu na fitane vrijednosti (ap_hi)",
+       x = "Fitane vrijednosti", y = "Reziduali") +
   theme_minimal()
 
 grid.arrange(plot1, plot2, plot3, plot5,
@@ -922,11 +975,13 @@ Iz kovarijanci možemo zaključiti da su varijable "dovoljno" nezavisne.
 ### Višestruka regresija za sistolički i dijastolički krvni tlak
 
 ```{r}
-fit.multi_hi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
+#ako maknete regresore koji su manje značajni R^2 pada
+fit.multi_hi <- lm(ap_hi ~ BMI + active + AgeinYr, filtered_data) 
 #fit.multi = lm(ap_hi ~ AgeinYr + active, filtered_data)
 summary(fit.multi_hi)
 
-fit.multi_lo <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data) #ako maknete regresore koji su manje značajni R^2 pada
+#ako maknete regresore koji su manje značajni R^2 pada
+fit.multi_lo <- lm(ap_lo ~ BMI + active + AgeinYr, filtered_data)
 #fit.multi = lm(ap_lo ~ AgeinYr + active, filtered_data)
 summary(fit.multi_lo)
 ```
@@ -954,42 +1009,39 @@ Iz KS i Lillieforsovog testa dobivamo da reziduali nisu normalno distribuirani. 
 selected.model = fit.multi_hi
 selected.model_ap_lo = fit.multi_lo
 
-plot1 <- ggplot(data.frame(x = selected.model$fitted.values, y = selected.model$residuals), aes(x, y)) +
+plot1 <- ggplot(data.frame(x = selected.model$fitted.values,
+                           y = selected.model$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_hi residuals", x = "fitted.values", y = "residuals")
 
-plot2 <- ggplot(data.frame(x = filtered_data$BMI, y = selected.model$residuals), aes(x, y)) +
+plot2 <- ggplot(data.frame(x = filtered_data$BMI,
+                           y = selected.model$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_hi residuals", x = "BMI", y = "residuals")
 
-plot3 <- ggplot(data.frame(x = filtered_data$age, y = selected.model$residuals), aes(x, y)) +
+plot3 <- ggplot(data.frame(x = filtered_data$AgeinYr,
+                           y = selected.model$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_hi residuals", x = "age", y = "residuals")
 
-plot4 <- ggplot(data.frame(x = selected.model_ap_lo$fitted.values, y = selected.model_ap_lo$residuals), aes(x, y)) +
+plot4 <- ggplot(data.frame(x = selected.model_ap_lo$fitted.values,
+                           y = selected.model_ap_lo$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_lo residuals", x = "fitted.values", y = "residuals")
 
-plot5 <- ggplot(data.frame(x = filtered_data$BMI, y = selected.model_ap_lo$residuals), aes(x, y)) +
+plot5 <- ggplot(data.frame(x = filtered_data$BMI, 
+                           y = selected.model_ap_lo$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_lo residuals", x = "BMI", y = "residuals")
 
-plot6 <- ggplot(data.frame(x = filtered_data$age, y = selected.model_ap_lo$residuals), aes(x, y)) +
+plot6 <- ggplot(data.frame(x = filtered_data$AgeinYr,
+                           y = selected.model_ap_lo$residuals), aes(x, y)) +
   geom_point() +
   labs(title = "ap_lo residuals", x = "age", y = "residuals")
+grid.arrange(plot1, plot4, plot2, plot5, plot3, plot6,
+             heights = c(1,1,1), widths = c(1,1))
 ```
 
-```{r}
-(plot1 + plot4)
-```
-
-```{r}
- (plot2 + plot5)
-```
-
-```{r}
- (plot3 + plot6)
-```
 Zaključak je da reziduali nisu distribuirani normalno.
 
 #### Zaključak
