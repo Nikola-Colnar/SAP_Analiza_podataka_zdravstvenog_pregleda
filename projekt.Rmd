@@ -3,32 +3,41 @@ title: "[SAP] Projektni zadatak - Analiza podataka zdravstvenog pregleda"
 author: "Statistički najizglednije ime"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
+  pdf_document:
+    latex_engine: xelatex
   html_document:
     df_print: paged
   word_document: default
 editor_options:
   chunk_output_type: inline
 geometry: top=1in, bottom=1in, left=0.5in, right=0.5in
+fontsize: 11pt
+header-includes:
+  - \usepackage{fontspec}
+  - \usepackage{polyglossia}
+  - \setmainlanguage{croatian}
 ---
+
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(results = 'hold')
+options(warn = -1)
 library(tidyverse)
 library(lubridate)
 library(nortest)
 library(car)
 library(patchwork)
 library(gridExtra)
+library(extrafont)
 ```
 # Tema projekta
 U ovom projektu analiziramo medicinske podatke i pokušavamo uz pomoć statističkih testova odgovoriti na razna pitanja o krvnom tlaku i njegovoj ovisnosti o dobi, indeksu tjelesne mase, životnim navikama i drugim varijablama čije su vrijednosti dostupne u uzorku. Za provedbu analize korišten je programski jezik R.
 
 # Inicijalni koraci projekta
-## Učitavanje podataka
 
 ```{r, include=FALSE}
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4, out.width = "100%", fig.align = "center")
 # Učitavanje podataka iz csv datoteke:
 healthDATA.modif = read.csv("Health Screening Data.csv")
 #View(healthDATA.modif)
@@ -136,6 +145,8 @@ ggplot(cholesterol_age, aes(x = cholesterol,
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
 ```
+
+
 Zaključci sa grafa:
 
 * U svakoj dobnoj skupini prevladava zdrava kategorija kolesterola.
@@ -160,6 +171,8 @@ ggplot(cholesterol_gender, aes(x = cholesterol,
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
 ```
+
+
 Zaključci sa grafa:
 
 * Zdrava kategorija dominira u svakom spolu.
@@ -196,6 +209,8 @@ ggplot(BMI_filtered_data, aes(x = BMI, color = gender, fill = gender)) +
   scale_fill_manual(values = c("blue", "pink")) +
   scale_color_manual(values = c("blue", "pink"))
 ```
+
+
 Zaključak
 
 * BMI većinom pripada rasponu između 20 i 30, dok su vrijednosti iznad 30 rjeđe i opadaju prema 40.
@@ -719,7 +734,8 @@ for (bmi_cat in bmi_categories) {
           plot.margin = margin(10, 10, 10, 10))
 
   print(combined_plots)
-  cat("\\newpage")
+  #cat("\\newpage")
+  cat("\n")
 }
 
 ```
@@ -885,7 +901,7 @@ Za dijastolički krvni tlak ponavljamo isti postupak.
 ```{r}
 fit.ap_lo <- lm(ap_lo ~ poly(BMI, 1) , data = filtered_data)
 plot(filtered_data$BMI, filtered_data$ap_lo, 
-     main = "Odnos dijatoličkog krvnog tlaka i BMI-a",
+     main = "Odnos dijastoličkog krvnog tlaka i BMI-a",
      xlab = "Body Mass Index (BMI)", 
      ylab = "dijastolički krvni tlak (ap_lo)",
      pch = 16, col = rgb(0, 0, 0, 0.5)) 
