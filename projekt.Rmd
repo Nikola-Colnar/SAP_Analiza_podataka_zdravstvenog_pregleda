@@ -893,7 +893,7 @@ plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age"
 
 
 #### Zaključak
-
+Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati sistolički krvni tlak.
 ### Višestruka regresija za dijastolički tlak
 Sada ponavljamo isti postupak za dijastolički tlak.
 
@@ -924,6 +924,7 @@ plot(filtered_data$age, selected.model$residuals, main="residuals", xlab = "age"
 
 #### Zaključak
 
+Iz konteksta medicine smatramo da je dobivena $R^2_{adj}$ premalena kako bismo mogli predviđati dijastolički krvni tlak.
 # Zaključak projekta
 
 Na temelju provedene analize možemo zaključiti da skup podataka o zdravstvenim informacijama nudi važne uvide, ali i pokazuje određene nedostatke koji utječu na kvalitetu interpretacije. Uočena je visoka prisutnost zdravih kategorija kolesterola u svim skupinama, dok starije dobne skupine pokazuju povećan rizik za opasne razine kolesterola. Slično tome, distribucija BMI-ja i krvnog tlaka ukazuje na određene tendencije, ali analize sugeriraju da predikcija krvnog tlaka na temelju BMI-a i dodatnih varijabli ima ograničenu pouzdanost.
